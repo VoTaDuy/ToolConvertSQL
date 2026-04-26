@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8
-    container_name: movie-mysql
-    restart: always
+    image: mysql:8.0
+    container_name: film-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: movie_db
+      MYSQL_DATABASE: film_db
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
 
 volumes:
   mysql_data:
