@@ -1,0 +1,53 @@
+Text-to-SQL Movie Database (Java + Spring Boot)
+Overview:
+    This project is a Text-to-SQL system that converts natural language questions into SQL queries and executes them on a MySQL database.
+
+Example:
+    User: Top 5 most watched movies?
+    → SQL generated automatically
+    → Execute on DB
+    → Return results
+
+Architecture: 
+    User Question
+    ↓
+    Spring Boot API
+    ↓
+    LLM (OpenAI / Gemini / SQLCoder)
+    ↓
+    Generated SQL
+    ↓
+    SQL Validator
+    ↓
+    MySQL Database (Docker)
+    ↓
+    Result → JSON
+
+Tech Stack:
+    Java 25
+    Spring Boot 
+    MySQL (Docker)
+    MySQL Workbench
+    JDBC / JPA
+    LLM API (OpenAI / Gemini / Ollama)
+
+Setup MySQL with Docker: 
+1. Create docker-compose.yml
+    services:
+        mysql:
+            image: mysql:8
+            container_name: movie-mysql
+            restart: always
+            environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: movie_db
+            ports:
+            - "3307:3306"
+            volumes:
+            - mysql_data:/var/lib/mysql
+
+        volumes:
+        mysql_data:
+
+2. Run container
+    docker compose up -d

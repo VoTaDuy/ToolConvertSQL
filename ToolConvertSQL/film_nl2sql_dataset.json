@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "difficulty": "easy",
+    "question": "List all movies.",
+    "sql": "SELECT * FROM movies;"
+  },
+  {
+    "id": 2,
+    "difficulty": "easy",
+    "question": "Show the titles of all movies.",
+    "sql": "SELECT title FROM movies;"
+  },
+  {
+    "id": 3,
+    "difficulty": "easy",
+    "question": "List movies released after 2020.",
+    "sql": "SELECT title, release_year FROM movies WHERE release_year > 2020;"
+  },
+  {
+    "id": 4,
+    "difficulty": "easy",
+    "question": "Find movies with rating greater than 8.",
+    "sql": "SELECT title, rating FROM movies WHERE rating > 8;"
+  },
+  {
+    "id": 5,
+    "difficulty": "easy",
+    "question": "Show movies released in 2023.",
+    "sql": "SELECT title FROM movies WHERE release_year = 2023;"
+  },
+  {
+    "id": 6,
+    "difficulty": "easy",
+    "question": "List movies longer than 120 minutes.",
+    "sql": "SELECT title, duration_minutes FROM movies WHERE duration_minutes > 120;"
+  },
+  {
+    "id": 7,
+    "difficulty": "easy",
+    "question": "Find directors from the United States.",
+    "sql": "SELECT name FROM directors WHERE nationality = 'United States';"
+  },
+  {
+    "id": 8,
+    "difficulty": "easy",
+    "question": "Show actors from the United Kingdom.",
+    "sql": "SELECT name FROM actors WHERE nationality = 'United Kingdom';"
+  },
+  {
+    "id": 9,
+    "difficulty": "easy",
+    "question": "List all movie genres.",
+    "sql": "SELECT name FROM genres;"
+  },
+  {
+    "id": 10,
+    "difficulty": "easy",
+    "question": "Find movies with rating between 7 and 9.",
+    "sql": "SELECT title, rating FROM movies WHERE rating BETWEEN 7 AND 9;"
+  },
+  {
+    "id": 11,
+    "difficulty": "medium",
+    "question": "List movies directed by Christopher Nolan.",
+    "sql": "SELECT m.title FROM movies m JOIN directors d ON m.director_id = d.director_id WHERE d.name = 'Christopher Nolan';"
+  },
+  {
+    "id": 12,
+    "difficulty": "medium",
+    "question": "Show movie titles with their director names.",
+    "sql": "SELECT m.title, d.name AS director_name FROM movies m JOIN directors d ON m.director_id = d.director_id;"
+  },
+  {
+    "id": 13,
+    "difficulty": "medium",
+    "question": "List movies in the Action genre.",
+    "sql": "SELECT m.title FROM movies m JOIN movie_genre mg ON m.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Action';"
+  },
+  {
+    "id": 14,
+    "difficulty": "medium",
+    "question": "Find all actors who acted in Inception.",
+    "sql": "SELECT a.name FROM actors a JOIN movie_actor ma ON a.actor_id = ma.actor_id JOIN movies m ON ma.movie_id = m.movie_id WHERE m.title = 'Inception';"
+  },
+  {
+    "id": 15,
+    "difficulty": "medium",
+    "question": "Show the genres of the movie Interstellar.",
+    "sql": "SELECT g.name FROM genres g JOIN movie_genre mg ON g.genre_id = mg.genre_id JOIN movies m ON mg.movie_id = m.movie_id WHERE m.title = 'Interstellar';"
+  },
+  {
+    "id": 16,
+    "difficulty": "medium",
+    "question": "List movies and their average review scores.",
+    "sql": "SELECT m.title, AVG(r.score) AS average_score FROM movies m JOIN reviews r ON m.movie_id = r.movie_id GROUP BY m.movie_id, m.title;"
+  },
+  {
+    "id": 17,
+    "difficulty": "medium",
+    "question": "Find movies reviewed by John Smith.",
+    "sql": "SELECT m.title FROM movies m JOIN reviews r ON m.movie_id = r.movie_id WHERE r.reviewer_name = 'John Smith';"
+  },
+  {
+    "id": 18,
+    "difficulty": "medium",
+    "question": "List actors and their roles in The Dark Knight.",
+    "sql": "SELECT a.name, ma.role_name FROM actors a JOIN movie_actor ma ON a.actor_id = ma.actor_id JOIN movies m ON ma.movie_id = m.movie_id WHERE m.title = 'The Dark Knight';"
+  },
+  {
+    "id": 19,
+    "difficulty": "medium",
+    "question": "Show movies directed by directors from the United Kingdom.",
+    "sql": "SELECT m.title, d.name AS director_name FROM movies m JOIN directors d ON m.director_id = d.director_id WHERE d.nationality = 'United Kingdom';"
+  },
+  {
+    "id": 20,
+    "difficulty": "medium",
+    "question": "List action movies released after 2015.",
+    "sql": "SELECT m.title, m.release_year FROM movies m JOIN movie_genre mg ON m.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Action' AND m.release_year > 2015;"
+  },
+  {
+    "id": 21,
+    "difficulty": "hard",
+    "question": "Which director has directed the most movies?",
+    "sql": "SELECT d.name, COUNT(m.movie_id) AS movie_count FROM directors d JOIN movies m ON d.director_id = m.director_id GROUP BY d.director_id, d.name ORDER BY movie_count DESC LIMIT 1;"
+  },
+  {
+    "id": 22,
+    "difficulty": "hard",
+    "question": "Which actor has appeared in the most movies?",
+    "sql": "SELECT a.name, COUNT(ma.movie_id) AS movie_count FROM actors a JOIN movie_actor ma ON a.actor_id = ma.actor_id GROUP BY a.actor_id, a.name ORDER BY movie_count DESC LIMIT 1;"
+  },
+  {
+    "id": 23,
+    "difficulty": "hard",
+    "question": "Which genre has the most movies?",
+    "sql": "SELECT g.name, COUNT(mg.movie_id) AS movie_count FROM genres g JOIN movie_genre mg ON g.genre_id = mg.genre_id GROUP BY g.genre_id, g.name ORDER BY movie_count DESC LIMIT 1;"
+  },
+  {
+    "id": 24,
+    "difficulty": "hard",
+    "question": "Find the movie with the highest average review score.",
+    "sql": "SELECT m.title, AVG(r.score) AS average_score FROM movies m JOIN reviews r ON m.movie_id = r.movie_id GROUP BY m.movie_id, m.title ORDER BY average_score DESC LIMIT 1;"
+  },
+  {
+    "id": 25,
+    "difficulty": "hard",
+    "question": "List directors who have directed more than 2 movies.",
+    "sql": "SELECT d.name, COUNT(m.movie_id) AS movie_count FROM directors d JOIN movies m ON d.director_id = m.director_id GROUP BY d.director_id, d.name HAVING COUNT(m.movie_id) > 2;"
+  },
+  {
+    "id": 26,
+    "difficulty": "hard",
+    "question": "List movies that have more than 3 actors.",
+    "sql": "SELECT m.title, COUNT(ma.actor_id) AS actor_count FROM movies m JOIN movie_actor ma ON m.movie_id = ma.movie_id GROUP BY m.movie_id, m.title HAVING COUNT(ma.actor_id) > 3;"
+  },
+  {
+    "id": 27,
+    "difficulty": "hard",
+    "question": "Find movies that belong to more than one genre.",
+    "sql": "SELECT m.title, COUNT(mg.genre_id) AS genre_count FROM movies m JOIN movie_genre mg ON m.movie_id = mg.movie_id GROUP BY m.movie_id, m.title HAVING COUNT(mg.genre_id) > 1;"
+  },
+  {
+    "id": 28,
+    "difficulty": "hard",
+    "question": "Show the average rating of movies for each director.",
+    "sql": "SELECT d.name, AVG(m.rating) AS average_rating FROM directors d JOIN movies m ON d.director_id = m.director_id GROUP BY d.director_id, d.name;"
+  },
+  {
+    "id": 29,
+    "difficulty": "hard",
+    "question": "Find genres whose movies have an average rating greater than 8.",
+    "sql": "SELECT g.name, AVG(m.rating) AS average_rating FROM genres g JOIN movie_genre mg ON g.genre_id = mg.genre_id JOIN movies m ON mg.movie_id = m.movie_id GROUP BY g.genre_id, g.name HAVING AVG(m.rating) > 8;"
+  },
+  {
+    "id": 30,
+    "difficulty": "hard",
+    "question": "List movies that have no reviews.",
+    "sql": "SELECT m.title FROM movies m LEFT JOIN reviews r ON m.movie_id = r.movie_id WHERE r.id IS NULL;"
+  }
+]
