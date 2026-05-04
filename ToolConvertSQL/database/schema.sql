@@ -1,5 +1,5 @@
-drop  database film_db;
-create database film_db;
+DROP DATABASE IF EXISTS film_db;
+CREATE DATABASE film_db;
 USE film_db;
 
 DROP TABLE IF EXISTS reviews;
@@ -9,34 +9,35 @@ DROP TABLE IF EXISTS movies;
 DROP TABLE IF EXISTS genres;
 DROP TABLE IF EXISTS actors;
 DROP TABLE IF EXISTS directors;
+
 -- DIRECTORS
 CREATE TABLE directors (
-    director_id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     nationality VARCHAR(100)
 );
 
 -- MOVIES
 CREATE TABLE movies (
-    movie_id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     release_year INT,
     rating FLOAT,
     duration_minutes INT,
     director_id INT,
-    FOREIGN KEY (director_id) REFERENCES directors(director_id)
+    FOREIGN KEY (director_id) REFERENCES directors(id)
 );
 
 -- ACTORS
-CREATE TABLE actors(
-    actor_id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE actors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     nationality VARCHAR(100)
 );
 
 -- GENRES
 CREATE TABLE genres (
-    genre_id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL
 );
 
@@ -46,8 +47,8 @@ CREATE TABLE movie_actor (
     actor_id INT,
     role_name VARCHAR(255),
     PRIMARY KEY (movie_id, actor_id),
-    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
-    FOREIGN KEY (actor_id) REFERENCES actors(actor_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(id),
+    FOREIGN KEY (actor_id) REFERENCES actors(id)
 );
 
 -- MOVIE_GENRE
@@ -55,8 +56,8 @@ CREATE TABLE movie_genre (
     movie_id INT,
     genre_id INT,
     PRIMARY KEY (movie_id, genre_id),
-    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
-    FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(id),
+    FOREIGN KEY (genre_id) REFERENCES genres(id)
 );
 
 -- REVIEWS
@@ -66,5 +67,5 @@ CREATE TABLE reviews (
     reviewer_name VARCHAR(255),
     score FLOAT,
     comment TEXT,
-    FOREIGN KEY (movie_id) REFERENCES movies(movie_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(id)
 );
