@@ -1,3 +1,5 @@
+drop  database film_db;
+create database film_db;
 USE film_db;
 
 DROP TABLE IF EXISTS reviews;

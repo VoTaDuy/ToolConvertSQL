@@ -30,6 +30,7 @@ public class EvaluationService implements EvaluationServiceImp {
     }
 
 
+
     @Override
     public EvaluationResult evaluateAllStrategies(List<EvaluationCase> testCases) {
 
@@ -74,7 +75,15 @@ public class EvaluationService implements EvaluationServiceImp {
 
     private boolean evaluateStrategy(String generatedSql, String expectedSql) {
 
+        if (generatedSql == null || generatedSql.isBlank()) {
+            return false;
+        }
+
         try {
+
+            generatedSql = cleanSql(generatedSql);
+            expectedSql = cleanSql(expectedSql);
+
             List<Map<String, Object>> genResult =
                     executionService.execute(generatedSql);
 
@@ -93,5 +102,14 @@ public class EvaluationService implements EvaluationServiceImp {
         if (total == 0) return "0%";
         double p = (double) correct / total * 100;
         return String.format("%.2f%%", p);
+    }
+
+    private String cleanSql(String sql) {
+        if (sql == null) return null;
+
+        return sql
+                .replace("```sql", "")
+                .replace("```", "")
+                .trim();
     }
 }
