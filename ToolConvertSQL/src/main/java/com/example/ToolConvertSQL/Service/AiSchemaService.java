@@ -24,7 +24,7 @@ public class AiSchemaService implements AiSchemaServiceImp {
             return null;
         }
 
-        String schema = schemaService.getSchemaDescription("film_db");
+        String schema = schemaService.getSchemaDescription("movie_db");
 
         String prompt = """
 You are a strict MySQL query generator.

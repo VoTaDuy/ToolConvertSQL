@@ -1,71 +1,94 @@
-DROP DATABASE IF EXISTS film_db;
-CREATE DATABASE film_db;
-USE film_db;
+CREATE DATABASE IF NOT EXISTS movie_db;
+USE movie_db;
 
-DROP TABLE IF EXISTS reviews;
-DROP TABLE IF EXISTS movie_genre;
-DROP TABLE IF EXISTS movie_actor;
-DROP TABLE IF EXISTS movies;
-DROP TABLE IF EXISTS genres;
-DROP TABLE IF EXISTS actors;
-DROP TABLE IF EXISTS directors;
-
--- DIRECTORS
-CREATE TABLE directors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    nationality VARCHAR(100)
+-- USERS
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  full_name VARCHAR(255),
+  email VARCHAR(255),
+  created_at DATETIME
 );
 
 -- MOVIES
 CREATE TABLE movies (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    release_year INT,
-    rating FLOAT,
-    duration_minutes INT,
-    director_id INT,
-    FOREIGN KEY (director_id) REFERENCES directors(id)
-);
-
--- ACTORS
-CREATE TABLE actors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    nationality VARCHAR(100)
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255),
+  description TEXT,
+  release_year INT,
+  duration_minutes INT,
+  age_rating VARCHAR(20),
+  language VARCHAR(100),
+  country VARCHAR(100),
+  created_at DATETIME
 );
 
 -- GENRES
 CREATE TABLE genres (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100)
 );
 
--- MOVIE_ACTOR
-CREATE TABLE movie_actor (
-    movie_id INT,
-    actor_id INT,
-    role_name VARCHAR(255),
-    PRIMARY KEY (movie_id, actor_id),
-    FOREIGN KEY (movie_id) REFERENCES movies(id),
-    FOREIGN KEY (actor_id) REFERENCES actors(id)
+-- ACTORS
+CREATE TABLE actors (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  full_name VARCHAR(255),
+  birth_year INT,
+  country VARCHAR(100)
 );
 
--- MOVIE_GENRE
-CREATE TABLE movie_genre (
-    movie_id INT,
-    genre_id INT,
-    PRIMARY KEY (movie_id, genre_id),
-    FOREIGN KEY (movie_id) REFERENCES movies(id),
-    FOREIGN KEY (genre_id) REFERENCES genres(id)
+-- DIRECTORS
+CREATE TABLE directors (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  full_name VARCHAR(255),
+  country VARCHAR(100)
+);
+
+-- MOVIE_GENRES
+CREATE TABLE movie_genres (
+  movie_id INT,
+  genre_id INT,
+  PRIMARY KEY (movie_id, genre_id),
+  FOREIGN KEY (movie_id) REFERENCES movies(id),
+  FOREIGN KEY (genre_id) REFERENCES genres(id)
+);
+
+-- MOVIE_ACTORS
+CREATE TABLE movie_actors (
+  movie_id INT,
+  actor_id INT,
+  role_name VARCHAR(255),
+  PRIMARY KEY (movie_id, actor_id),
+  FOREIGN KEY (movie_id) REFERENCES movies(id),
+  FOREIGN KEY (actor_id) REFERENCES actors(id)
+);
+
+-- MOVIE_DIRECTORS
+CREATE TABLE movie_directors (
+  movie_id INT,
+  director_id INT,
+  PRIMARY KEY (movie_id, director_id),
+  FOREIGN KEY (movie_id) REFERENCES movies(id),
+  FOREIGN KEY (director_id) REFERENCES directors(id)
 );
 
 -- REVIEWS
 CREATE TABLE reviews (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    movie_id INT,
-    reviewer_name VARCHAR(255),
-    score FLOAT,
-    comment TEXT,
-    FOREIGN KEY (movie_id) REFERENCES movies(id)
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT,
+  movie_id INT,
+  rating DECIMAL(3,1),
+  comment TEXT,
+  created_at DATETIME,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (movie_id) REFERENCES movies(id)
+);
+
+-- FAVORITES
+CREATE TABLE favorites (
+  user_id INT,
+  movie_id INT,
+  created_at DATETIME,
+  PRIMARY KEY (user_id, movie_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (movie_id) REFERENCES movies(id)
 );
