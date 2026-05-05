@@ -7,7 +7,7 @@ import com.example.ToolConvertSQL.Service.Imp.EvaluationServiceImp;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/evaluation")
 public class EvaluationController {

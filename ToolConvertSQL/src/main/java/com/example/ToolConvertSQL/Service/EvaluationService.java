@@ -49,14 +49,17 @@ public class EvaluationService implements EvaluationServiceImp {
 
             if (evaluateStrategy(ruleService.generateSql(question), expectedSql)) {
                 ruleCorrect++;
+                System.out.println(ruleService.generateSql(question));
             }
 
             if (evaluateStrategy(aiService.generateSql(question), expectedSql)) {
                 aiCorrect++;
+                System.out.println(aiService.generateSql(question));
             }
 
             if (evaluateStrategy(aiSchemaService.generateSql(question), expectedSql)) {
                 schemaCorrect++;
+                System.out.println(aiSchemaService.generateSql(question));
             }
         }
 

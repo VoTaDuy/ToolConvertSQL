@@ -20,32 +20,63 @@ public class AiSchemaService implements AiSchemaServiceImp {
     @Override
     public String generateSql(String question) {
 
-        if (question == null || question.isBlank()) {
-            return null;
+        if (question == null || question.isBlank()) return null;
+
+        String schema = retrieveSchema(question);
+
+        if (schema == null || schema.isBlank()) {
+            schema = schemaService.getFullSchema();
         }
 
-        String schema = schemaService.getSchemaDescription("movie_db");
-
         String prompt = """
-You are a strict MySQL query generator.
+You are a STRICT TEXT-TO-SQL ENGINE.
 
-DATABASE SCHEMA:
+====================
+DATABASE SCHEMA
+====================
 %s
 
-IMPORTANT RULES:
-- Use ONLY the exact table and column names shown in the schema.
-- Do NOT invent columns like runtime, length, director, genre, country.
-- duration column is named: duration_minutes
-- director is linked via director_id
-- nationality is the correct column name (NOT country)
-- genre requires JOIN movie_genre and genres
-- actor requires JOIN movie_actor and actors
-- Return ONLY pure MySQL query.
-- No explanation.
-- No markdown.
-- No ```sql```
+====================
+HARD RULES (MUST FOLLOW)
+====================
 
-USER QUESTION:
+1. You MUST ONLY use tables and columns from schema above.
+2. NEVER invent tables or columns.
+3. movies table DOES NOT contain rating.
+4. rating EXISTS ONLY in reviews table.
+5. If rating is used → MUST JOIN reviews.
+6. If actor is used → MUST JOIN movie_actors + actors.
+7. If director is used → MUST JOIN movie_directors + directors.
+8. If genre is used → MUST JOIN movie_genres + genres.
+
+MOVIE RATING RULE:
+- movies table DOES NOT store rating
+- rating is derived from reviews table
+- ALWAYS use AVG(r.rating) when asking about movie rating
+AGGREGATION RULE:
+- AVG, COUNT, SUM MUST NOT be used in WHERE
+- MUST use HAVING instead
+====================
+JOIN MAP (MANDATORY)
+====================
+
+movies.id = reviews.movie_id
+movies.id = movie_actors.movie_id
+movies.id = movie_directors.movie_id
+movies.id = movie_genres.movie_id
+
+====================
+OUTPUT FORMAT
+====================
+- ONLY SQL
+- NO explanation
+- NO markdown
+- NO extra text
+- NO semicolon required
+
+====================
+USER QUESTION
+====================
 %s
 """.formatted(schema, question);
 
@@ -78,7 +109,11 @@ USER QUESTION:
 
             String sql = response.getBody().get("response").toString();
 
-            return cleanSql(sql);
+            sql = cleanSql(sql);
+
+            validateSql(sql);
+
+            return sql;
 
         } catch (Exception e) {
             System.out.println("AI generation failed: " + e.getMessage());
@@ -86,19 +121,67 @@ USER QUESTION:
         }
     }
 
+    public String retrieveSchema(String question) {
+
+        if (question == null) return "";
+
+        String q = question.toLowerCase();
+        StringBuilder schema = new StringBuilder();
+
+        schema.append(schemaService.getTable("movies")).append("\n");
+
+        if (containsAny(q, "rating", "review", "score", "đánh giá")) {
+            schema.append(schemaService.getTable("reviews")).append("\n");
+        }
+
+        if (containsAny(q, "actor", "cast", "diễn viên")) {
+            schema.append(schemaService.getTable("actors")).append("\n");
+            schema.append(schemaService.getTable("movie_actors")).append("\n");
+        }
+
+        if (containsAny(q, "director", "đạo diễn")) {
+            schema.append(schemaService.getTable("directors")).append("\n");
+            schema.append(schemaService.getTable("movie_directors")).append("\n");
+        }
+
+        if (containsAny(q, "genre", "thể loại")) {
+            schema.append(schemaService.getTable("genres")).append("\n");
+            schema.append(schemaService.getTable("movie_genres")).append("\n");
+        }
+
+        return schema.toString();
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        for (String k : keywords) {
+            if (text.contains(k)) return true;
+        }
+        return false;
+    }
+
     private String cleanSql(String sql) {
 
         if (sql == null) return null;
 
-        sql = sql.replaceAll("```sql", "")
-                .replaceAll("```", "");
+        return sql.replaceAll("```sql", "")
+                .replaceAll("```", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
 
-        sql = sql.replaceAll("\\s+", " ").trim();
+    private void validateSql(String sql) {
 
-        if (sql.endsWith(";")) {
-            sql = sql.substring(0, sql.length() - 1);
+        String lower = sql.toLowerCase();
+
+        if (lower.contains("movies.rating")) {
+            throw new RuntimeException("Invalid SQL: rating is not in movies table");
         }
 
-        return sql;
+        if (lower.contains("drop ") ||
+                lower.contains("delete ") ||
+                lower.contains("update ") ||
+                lower.contains("insert ")) {
+            throw new RuntimeException("Unsafe SQL blocked");
+        }
     }
 }

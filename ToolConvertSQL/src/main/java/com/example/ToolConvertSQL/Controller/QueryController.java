@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/generate")
 public class QueryController {
@@ -33,12 +33,12 @@ public class QueryController {
         this.aiSchemaServiceImp = aiSchemaServiceImp;
         this.sqlSafetyService = sqlSafetyService;
     }
-    private String cleanSql(String sql) {
 
+    private String cleanSql(String sql) {
         if (sql == null) return null;
 
+        sql = sql.replaceAll("```sql", "");
         sql = sql.replaceAll("```", "");
-
         sql = sql.trim();
 
         int index = sql.toLowerCase().indexOf("select");
@@ -55,27 +55,43 @@ public class QueryController {
 
         String sql;
 
-        if ("rule".equalsIgnoreCase(method)) {
-            sql = ruleService.generateSql(request.getQuestion());
+        try {
+            if ("rule".equalsIgnoreCase(method)) {
+                sql = ruleService.generateSql(request.getQuestion());
+            } else if ("ai".equalsIgnoreCase(method)) {
+                sql = ollamaService.generateSql(request.getQuestion());
+
+            } else if ("aiSchema".equalsIgnoreCase(method)) {
+                sql = aiSchemaServiceImp.generateSql(request.getQuestion());
+
+            } else {
+                return new QueryResponse("Invalid method", null);
+            }
+
+            sql = cleanSql(sql);
+
+            System.out.println("RAW SQL: " + sql);
+
+            if (sql == null || sql.isBlank()) {
+                return new QueryResponse("Empty SQL generated", null);
+            }
+
+            if (!sqlSafetyService.isSafe(sql)) {
+                return new QueryResponse("Unsafe SQL detected", null);
+            }
+
+            List<Map<String, Object>> result =
+                    sqlExecutionService.execute(sql);
+
+            return new QueryResponse(sql, result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return new QueryResponse(
+                    "Execution error: " + e.getMessage(),
+                    null
+            );
         }
-        else if ("ai".equalsIgnoreCase(method)) {
-            sql = ollamaService.generateSql(request.getQuestion());
-        } else if ("aiSchema".equalsIgnoreCase(method)) {
-            sql = aiSchemaServiceImp.generateSql(request.getQuestion());
-        } else {
-            return new QueryResponse("Invalid method", null);
-        }
-        sql = cleanSql(sql);
-
-
-        System.out.println("RAW SQL: " + sql);
-
-        if (!sqlSafetyService.isSafe(sql)) {
-            return new QueryResponse("Unsafe SQL detected", null);
-        }
-        List<Map<String, Object>> result =
-                sqlExecutionService.execute(sql);
-
-        return new QueryResponse(sql, result);
     }
 }

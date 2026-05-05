@@ -19,6 +19,7 @@ CREATE TABLE movies (
   age_rating VARCHAR(20),
   language VARCHAR(100),
   country VARCHAR(100),
+  avg_rating DECIMAL(3,2) DEFAULT 0,
   created_at DATETIME
 );
 

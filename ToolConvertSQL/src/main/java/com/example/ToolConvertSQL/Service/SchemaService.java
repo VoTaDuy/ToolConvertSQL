@@ -1,44 +1,126 @@
 package com.example.ToolConvertSQL.Service;
 
-import com.example.ToolConvertSQL.Service.Imp.SchemaServiceImp;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
-public class SchemaService implements SchemaServiceImp {
+public class SchemaService {
 
     private final JdbcTemplate jdbcTemplate;
+
+    private static final Set<String> ALLOWED_TABLES = Set.of(
+            "movies",
+            "reviews",
+            "users",
+            "actors",
+            "directors",
+            "genres",
+            "movie_actors",
+            "movie_directors",
+            "movie_genres",
+            "favorites"
+    );
 
     public SchemaService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Override
-    public String getSchemaDescription(String databaseName) {
+    // ===== GET SINGLE TABLE SCHEMA =====
+    public String getTable(String tableName) {
+
+        if (!ALLOWED_TABLES.contains(tableName)) {
+            throw new IllegalArgumentException("Table not allowed: " + tableName);
+        }
 
         String sql = """
-                SELECT table_name, column_name, data_type
-                FROM information_schema.columns
-                WHERE table_schema = ?
-                ORDER BY table_name;
-                """;
+            SELECT column_name, data_type
+            FROM information_schema.columns
+            WHERE table_schema = 'movie_db'
+              AND table_name = ?
+            ORDER BY ordinal_position
+        """;
 
-        var rows = jdbcTemplate.queryForList(sql, databaseName);
+        List<Map<String, Object>> rows =
+                jdbcTemplate.queryForList(sql, tableName);
 
-        StringBuilder schema = new StringBuilder();
+        if (rows.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("TABLE ").append(tableName).append(" {\n");
 
         for (Map<String, Object> row : rows) {
-            schema.append("Table: ")
-                    .append(row.get("table_name"))
-                    .append(" | Column: ")
+            sb.append("  ")
                     .append(row.get("column_name"))
-                    .append(" | Type: ")
+                    .append(" : ")
                     .append(row.get("data_type"))
                     .append("\n");
         }
 
-        return schema.toString();
+        sb.append("}\n");
+
+        // ===== ADD RELATION HINT (RẤT QUAN TRỌNG CHO LLM) =====
+        sb.append(getRelationHint(tableName));
+
+        return sb.toString();
+    }
+
+    // ===== RELATIONSHIP HINT FOR LLM (RAG BOOST) =====
+    private String getRelationHint(String table) {
+
+        return switch (table) {
+
+            case "movies" -> """
+            RELATIONS:
+            - movies.id = reviews.movie_id
+            - movies.id = movie_actors.movie_id
+            - movies.id = movie_directors.movie_id
+            - movies.id = movie_genres.movie_id
+            """;
+
+            case "reviews" -> """
+            RELATIONS:
+            - reviews.movie_id = movies.id
+            - reviews.user_id = users.id
+            """;
+
+            case "actors" -> """
+            RELATIONS:
+            - actors.id = movie_actors.actor_id
+            """;
+
+            case "directors" -> """
+            RELATIONS:
+            - directors.id = movie_directors.director_id
+            """;
+
+            case "genres" -> """
+            RELATIONS:
+            - genres.id = movie_genres.genre_id
+            """;
+
+            default -> "";
+        };
+    }
+
+    // ===== FULL SCHEMA (RAG CONTEXT) =====
+    public String getFullSchema() {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String table : ALLOWED_TABLES) {
+            sb.append(getTable(table)).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    // ===== SAFE TABLE LIST =====
+    public Set<String> getAllowedTables() {
+        return ALLOWED_TABLES;
     }
 }
