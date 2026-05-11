@@ -93,3 +93,10 @@ CREATE TABLE favorites (
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (movie_id) REFERENCES movies(id)
 );
+
+CREATE TABLE nl2sql_embeddings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question TEXT NOT NULL,
+    sql_text TEXT NOT NULL,
+    embedding JSON NOT NULL
+);

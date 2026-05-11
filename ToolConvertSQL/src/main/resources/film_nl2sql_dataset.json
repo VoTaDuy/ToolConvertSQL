@@ -22,32 +22,32 @@
     "id": 4,
     "difficulty": "easy",
     "question": "Find movies with rating greater than 8.",
-    "sql": "SELECT DISTINCT m.title FROM movies m JOIN reviews r ON m.id = r.movie_id GROUP BY m.id, m.title HAVING AVG(r.rating) > 8;"
+    "sql": "SELECT m.title, AVG(r.rating) AS avg_rating FROM movies m JOIN reviews r ON m.id = r.movie_id GROUP BY m.id, m.title HAVING AVG(r.rating) > 8;"
   },
 
   {
     "id": 5,
     "difficulty": "easy",
     "question": "Show movies released in 2023.",
-    "sql": "SELECT title FROM movies WHERE release_year = 2023;"
+    "sql": "SELECT * FROM movies WHERE release_year = 2023;"
   },
   {
     "id": 6,
     "difficulty": "easy",
     "question": "List movies longer than 120 minutes.",
-    "sql": "SELECT title, duration_minutes FROM movies WHERE duration_minutes > 120;"
+    "sql": "SELECT m.title FROM movies m WHERE m.duration_minutes > 120;\","
   },
   {
     "id": 7,
     "difficulty": "easy",
     "question": "Find directors from the United States.",
-    "sql": "SELECT full_name FROM directors WHERE country = 'United States';"
+    "sql": "SELECT DISTINCT d.full_name FROM movie_directors md JOIN directors d ON md.director_id = d.id WHERE d.country = 'United States';"
   },
   {
     "id": 8,
     "difficulty": "easy",
     "question": "Show actors from the United Kingdom.",
-    "sql": "SELECT full_name FROM actors WHERE country = 'United Kingdom';"
+    "sql": "SELECT DISTINCT d.full_name FROM movie_directors md JOIN directors d ON md.director_id = d.id WHERE d.country = 'United Kingdom';"
   },
   {
     "id": 9,
