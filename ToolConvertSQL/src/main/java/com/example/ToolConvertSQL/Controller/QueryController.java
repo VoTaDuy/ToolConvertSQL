@@ -64,7 +64,8 @@ public class QueryController {
             } else if ("aiSchema".equalsIgnoreCase(method)) {
                 sql = aiSchemaServiceImp.generateSql(request.getQuestion());
 
-            } else {
+            }
+            else {
                 return new QueryResponse("Invalid method", null);
             }
 
