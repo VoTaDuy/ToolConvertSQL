@@ -1,6 +1,9 @@
 package com.example.ToolConvertSQL.Service;
 
 import com.example.ToolConvertSQL.Service.Imp.VectorServiceImp;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -8,78 +11,65 @@ import java.util.*;
 @Service
 public class VectorService implements VectorServiceImp {
 
-    private final EmbeddingService embeddingService;
-    private final SchemaService schemaService;
+    private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final Map<String, List<Double>> vectorStore = new HashMap<>();
-
-    public VectorService(EmbeddingService embeddingService,
-                         SchemaService schemaService) {
-        this.embeddingService = embeddingService;
-        this.schemaService = schemaService;
-        ingestSchema();
-    }
-
-    private void ingestSchema() {
-
-        String[] tables = {
-                "movies",
-                "reviews",
-                "actors",
-                "directors",
-                "genres",
-                "movie_actors",
-                "movie_directors",
-                "movie_genres"
-        };
-
-        for (String table : tables) {
-            String schemaText = schemaService.getTable(table);
-            List<Double> embedding = embeddingService.embed(schemaText);
-            if (embedding != null) {
-                vectorStore.put(schemaText, embedding);
-            }
-        }
-
-        System.out.println("Schema embedded into vector store.");
+    public VectorService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public String retrieveRelevantSchema(String question) {
+    public List<Map<String, String>> search(List<Double> queryVector, int topK) {
 
-        List<Double> queryEmbedding = embeddingService.embed(question);
-        if (queryEmbedding == null) {
-            return schemaService.getFullSchema();
+        List<Map<String, Object>> rows =
+                jdbcTemplate.queryForList("SELECT question, sql_text, embedding FROM nl2sql_embeddings");
+
+        List<Map<String, String>> scored = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+
+            try {
+
+                List<Double> vector =
+                        objectMapper.readValue(
+                                row.get("embedding").toString(),
+                                new TypeReference<List<Double>>() {}
+                        );
+
+                double score = cosineSimilarity(queryVector, vector);
+
+                Map<String, String> result = new HashMap<>();
+                result.put("question", row.get("question").toString());
+                result.put("sql", row.get("sql_text").toString());
+                result.put("score", String.valueOf(score));
+
+                scored.add(result);
+
+            } catch (Exception ignored) {}
         }
 
-        double bestScore = -1;
-        String bestMatch = "";
+        scored.sort((a, b) ->
+                Double.compare(
+                        Double.parseDouble(b.get("score")),
+                        Double.parseDouble(a.get("score"))
+                )
+        );
 
-        for (Map.Entry<String, List<Double>> entry : vectorStore.entrySet()) {
-
-            double score = cosineSimilarity(queryEmbedding, entry.getValue());
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = entry.getKey();
-            }
-        }
-
-        return bestMatch;
+        return scored.stream().limit(topK).toList();
     }
 
-    private double cosineSimilarity(List<Double> v1, List<Double> v2) {
+    private double cosineSimilarity(List<Double> a, List<Double> b) {
 
         double dot = 0.0;
-        double norm1 = 0.0;
-        double norm2 = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
 
-        for (int i = 0; i < v1.size(); i++) {
-            dot += v1.get(i) * v2.get(i);
-            norm1 += Math.pow(v1.get(i), 2);
-            norm2 += Math.pow(v2.get(i), 2);
+        for (int i = 0; i < a.size(); i++) {
+            dot += a.get(i) * b.get(i);
+            normA += Math.pow(a.get(i), 2);
+            normB += Math.pow(b.get(i), 2);
         }
 
-        return dot / (Math.sqrt(norm1) * Math.sqrt(norm2));
+        return dot / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 }

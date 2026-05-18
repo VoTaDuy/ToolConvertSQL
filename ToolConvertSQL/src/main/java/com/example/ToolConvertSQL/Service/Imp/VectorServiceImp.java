@@ -1,5 +1,8 @@
 package com.example.ToolConvertSQL.Service.Imp;
 
+import java.util.List;
+import java.util.Map;
+
 public interface VectorServiceImp {
-    String retrieveRelevantSchema(String question);
+    List<Map<String, String>> search(List<Double> queryVector, int topK);
 }

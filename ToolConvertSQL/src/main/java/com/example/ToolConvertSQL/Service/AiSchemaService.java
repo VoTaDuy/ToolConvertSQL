@@ -1,23 +1,36 @@
 package com.example.ToolConvertSQL.Service;
 
 import com.example.ToolConvertSQL.Service.Imp.AiSchemaServiceImp;
+import com.example.ToolConvertSQL.Service.Imp.VectorServiceImp;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class AiSchemaService implements AiSchemaServiceImp {
 
     private final RestTemplate restTemplate = new RestTemplate();
+
     private final SchemaService schemaService;
     private final SqlExecutionService sqlExecutionService;
+    private final EmbeddingService embeddingService;
+    private final VectorServiceImp vectorSearchService;
+    private final RagPromptBuilder ragPromptBuilder;
 
     public AiSchemaService(SchemaService schemaService,
-                           SqlExecutionService sqlExecutionService) {
+                           SqlExecutionService sqlExecutionService,
+                           EmbeddingService embeddingService,
+                           VectorServiceImp vectorSearchService,
+                           RagPromptBuilder ragPromptBuilder) {
+
         this.schemaService = schemaService;
         this.sqlExecutionService = sqlExecutionService;
+        this.embeddingService = embeddingService;
+        this.vectorSearchService = vectorSearchService;
+        this.ragPromptBuilder = ragPromptBuilder;
     }
 
     @Override
@@ -25,94 +38,56 @@ public class AiSchemaService implements AiSchemaServiceImp {
 
         if (question == null || question.isBlank()) return null;
 
-        String schema = schemaService.getFullSchema();
+        try {
 
-        String sql = callLLM(buildPrompt(schema, question));
+            // 1️⃣ Get full schema
+            String schema = schemaService.getFullSchema();
 
-        if (sql == null) return null;
+            // 2️⃣ Embed user question
+            List<Double> queryVector = embeddingService.embed(question);
 
-        sql = cleanSql(sql);
-
-        // ===== Repair Loop (max 2 attempts) =====
-        for (int i = 0; i < 2; i++) {
-
-            try {
-                validateSql(sql);
-
-                // try execute (syntax + runtime validation)
-                sqlExecutionService.execute(sql);
-
-                return sql;
-
-            } catch (Exception e) {
-
-                String repairPrompt = """
-You are fixing a SQL query.
-
-Database schema:
-%s
-
-The following SQL failed:
-
-%s
-
-Error:
-%s
-
-Rules:
-- Use only tables and columns from schema
-- Only generate SELECT
-- No explanation
-- No markdown
-- Return ONLY corrected SQL
-
-Fix it.
-""".formatted(schema, sql, e.getMessage());
-
-                sql = callLLM(repairPrompt);
-
-                if (sql == null) return null;
-
-                sql = cleanSql(sql);
+            if (queryVector == null || queryVector.isEmpty()) {
+                return null;
             }
+
+            // 3️⃣ Retrieve top 3 similar examples
+            List<Map<String, String>> examples =
+                    vectorSearchService.search(queryVector, 3);
+
+            // 4️⃣ Build RAG prompt
+            String prompt =
+                    ragPromptBuilder.buildPrompt(schema, question, examples);
+
+            // 5️⃣ Call LLM
+            String sql = callLLM(prompt);
+
+            if (sql == null) return null;
+
+            sql = cleanSql(sql);
+
+            // 6️⃣ Validate SQL
+            validateSql(sql);
+
+            // 7️⃣ Execute to ensure valid
+            sqlExecutionService.execute(sql);
+
+            return sql;
+
+        } catch (Exception e) {
+            System.out.println("RAG SQL generation failed: " + e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
     // =========================
-    // Prompt Builder (Simple & Strong)
+    // LLM CALL
     // =========================
-    private String buildPrompt(String schema, String question) {
-
-        return """
-You are a TEXT-TO-SQL system.
-
-Database schema:
-%s
-
-Rules:
-- Use only tables and columns from schema
-- Only generate SELECT statement
-- No explanation
-- No markdown
-- If rating is requested → use AVG(r.rating)
-- Aggregation conditions must use HAVING
-- Use JOIN only when required
-- Prefix columns with table alias when joining
-
-Question:
-%s
-""".formatted(schema, question);
-    }
-
-
     private String callLLM(String prompt) {
 
         try {
 
             Map<String, Object> body = Map.of(
-                    "model", "deepseek-coder", // recommend change here
+                    "model", "deepseek-coder",
                     "prompt", prompt,
                     "stream", false,
                     "temperature", 0
@@ -144,7 +119,9 @@ Question:
         }
     }
 
-
+    // =========================
+    // CLEAN SQL
+    // =========================
     private String cleanSql(String sql) {
 
         if (sql == null) return null;
@@ -156,7 +133,9 @@ Question:
                 .trim();
     }
 
-
+    // =========================
+    // VALIDATION
+    // =========================
     private void validateSql(String sql) {
 
         String lower = sql.toLowerCase();
@@ -174,7 +153,7 @@ Question:
         }
 
         if (lower.contains("movies.rating")) {
-            throw new RuntimeException("rating is not in movies table");
+            throw new RuntimeException("rating not in movies table");
         }
     }
 }
