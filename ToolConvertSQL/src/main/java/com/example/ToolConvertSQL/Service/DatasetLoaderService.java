@@ -1,6 +1,6 @@
 package com.example.ToolConvertSQL.Service;
 
-import com.example.ToolConvertSQL.DTO.EvaluationCase;
+import com.example.ToolConvertSQL.DTO.DatasetItem;
 import com.example.ToolConvertSQL.Service.Imp.DatasetLoaderServiceImp;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +15,7 @@ public class DatasetLoaderService implements DatasetLoaderServiceImp {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public List<EvaluationCase> loadDataset(String fileName) {
+    public List<DatasetItem> loadDataset(String fileName) {
 
         try {
             ClassPathResource resource = new ClassPathResource(fileName);
@@ -23,7 +23,7 @@ public class DatasetLoaderService implements DatasetLoaderServiceImp {
 
             return objectMapper.readValue(
                     inputStream,
-                    new TypeReference<List<EvaluationCase>>() {}
+                    new TypeReference<List<DatasetItem>>() {}
             );
 
         } catch (Exception e) {

@@ -1,38 +1,67 @@
 package com.example.ToolConvertSQL.Controller;
 
-import com.example.ToolConvertSQL.DTO.EvaluationCase;
+import com.example.ToolConvertSQL.DTO.DatasetItem;
 import com.example.ToolConvertSQL.DTO.EvaluationResult;
 import com.example.ToolConvertSQL.Service.Imp.DatasetLoaderServiceImp;
 import com.example.ToolConvertSQL.Service.Imp.EvaluationServiceImp;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/evaluation")
 public class EvaluationController {
 
-    private final EvaluationServiceImp evaluationService;
-    private final DatasetLoaderServiceImp datasetLoaderServiceImp;
+    @Autowired
+    private  final EvaluationServiceImp evaluationService;
+    @Autowired
+    private final DatasetLoaderServiceImp datasetLoaderService;
 
-    public EvaluationController(EvaluationServiceImp evaluationService, DatasetLoaderServiceImp datasetLoaderServiceImp) {
+    public EvaluationController(EvaluationServiceImp evaluationService,
+                                DatasetLoaderServiceImp datasetLoaderService) {
         this.evaluationService = evaluationService;
-        this.datasetLoaderServiceImp = datasetLoaderServiceImp;
+        this.datasetLoaderService = datasetLoaderService;
     }
+
 
     @PostMapping("/run")
-    public EvaluationResult runEvaluation(
-            @RequestBody List<EvaluationCase> testCases) {
+    public ResponseEntity<EvaluationResult> runEvaluation(
+            @RequestBody List<DatasetItem> testCases) {
 
-        return evaluationService.evaluateAllStrategies(testCases);
+        if (testCases == null || testCases.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        EvaluationResult result =
+                evaluationService.evaluateAllStrategies(testCases);
+
+        return ResponseEntity.ok(result);
     }
 
+
     @PostMapping("/run-from-file")
-    public EvaluationResult runFromFile() {
+    public ResponseEntity<EvaluationResult> runFromFile(
+            @RequestParam(defaultValue = "movie_eval_dataset.json") String file) {
 
-        List<EvaluationCase> testCases =
-                datasetLoaderServiceImp.loadDataset("film_nl2sql_dataset.json");
+        try {
+            List<DatasetItem> testCases =
+                    datasetLoaderService.loadDataset(file);
 
-        return evaluationService.evaluateAllStrategies(testCases);
+            if (testCases.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            EvaluationResult result =
+                    evaluationService.evaluateAllStrategies(testCases);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
