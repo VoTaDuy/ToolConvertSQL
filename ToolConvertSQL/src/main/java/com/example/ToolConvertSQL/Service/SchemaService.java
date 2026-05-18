@@ -12,24 +12,26 @@ public class SchemaService {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private static final Set<String> ALLOWED_TABLES = Set.of(
-            "movies",
-            "reviews",
+    private static final String DATABASE_NAME = "movie_db";
+
+    private static final List<String> ALLOWED_TABLES = List.of(
             "users",
+            "movies",
+            "genres",
             "actors",
             "directors",
-            "genres",
-            "movie_actors",
-            "movie_directors",
+            "reviews",
+            "favorites",
             "movie_genres",
-            "favorites"
+            "movie_actors",
+            "movie_directors"
     );
 
     public SchemaService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // ===== GET SINGLE TABLE SCHEMA =====
+
     public String getTable(String tableName) {
 
         if (!ALLOWED_TABLES.contains(tableName)) {
@@ -39,88 +41,117 @@ public class SchemaService {
         String sql = """
             SELECT column_name, data_type
             FROM information_schema.columns
-            WHERE table_schema = 'movie_db'
+            WHERE table_schema = ?
               AND table_name = ?
             ORDER BY ordinal_position
         """;
 
         List<Map<String, Object>> rows =
-                jdbcTemplate.queryForList(sql, tableName);
+                jdbcTemplate.queryForList(sql, DATABASE_NAME, tableName);
 
         if (rows.isEmpty()) return "";
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("TABLE ").append(tableName).append(" {\n");
+        sb.append("TABLE ").append(tableName).append(" (\n");
 
         for (Map<String, Object> row : rows) {
             sb.append("  ")
                     .append(row.get("column_name"))
-                    .append(" : ")
+                    .append(" ")
                     .append(row.get("data_type"))
-                    .append("\n");
+                    .append(",\n");
         }
 
-        sb.append("}\n");
+        // remove last comma
+        sb.setLength(sb.length() - 2);
 
-        // ===== ADD RELATION HINT (RẤT QUAN TRỌNG CHO LLM) =====
+        sb.append("\n)\n");
+
         sb.append(getRelationHint(tableName));
+        sb.append("\n");
 
         return sb.toString();
     }
 
-    // ===== RELATIONSHIP HINT FOR LLM (RAG BOOST) =====
+
     private String getRelationHint(String table) {
 
         return switch (table) {
 
             case "movies" -> """
             RELATIONS:
-            - movies.id = reviews.movie_id
-            - movies.id = movie_actors.movie_id
-            - movies.id = movie_directors.movie_id
-            - movies.id = movie_genres.movie_id
+              movies.id = reviews.movie_id
+              movies.id = movie_actors.movie_id
+              movies.id = movie_directors.movie_id
+              movies.id = movie_genres.movie_id
+              movies.id = favorites.movie_id
             """;
 
             case "reviews" -> """
             RELATIONS:
-            - reviews.movie_id = movies.id
-            - reviews.user_id = users.id
+              reviews.movie_id = movies.id
+              reviews.user_id = users.id
             """;
 
-            case "actors" -> """
+            case "movie_actors" -> """
             RELATIONS:
-            - actors.id = movie_actors.actor_id
+              movie_actors.movie_id = movies.id
+              movie_actors.actor_id = actors.id
             """;
 
-            case "directors" -> """
+            case "movie_directors" -> """
             RELATIONS:
-            - directors.id = movie_directors.director_id
+              movie_directors.movie_id = movies.id
+              movie_directors.director_id = directors.id
             """;
 
-            case "genres" -> """
+            case "movie_genres" -> """
             RELATIONS:
-            - genres.id = movie_genres.genre_id
+              movie_genres.movie_id = movies.id
+              movie_genres.genre_id = genres.id
+            """;
+
+            case "favorites" -> """
+            RELATIONS:
+              favorites.user_id = users.id
+              favorites.movie_id = movies.id
             """;
 
             default -> "";
         };
     }
 
-    // ===== FULL SCHEMA (RAG CONTEXT) =====
+
     public String getFullSchema() {
 
         StringBuilder sb = new StringBuilder();
 
+        sb.append("DATABASE: ").append(DATABASE_NAME).append("\n\n");
+
         for (String table : ALLOWED_TABLES) {
-            sb.append(getTable(table)).append("\n");
+            sb.append(getTable(table));
+            sb.append("\n");
         }
+
+        sb.append("GLOBAL RELATIONSHIPS:\n");
+        sb.append("""
+            reviews.user_id = users.id
+            reviews.movie_id = movies.id
+            favorites.user_id = users.id
+            favorites.movie_id = movies.id
+            movie_actors.movie_id = movies.id
+            movie_actors.actor_id = actors.id
+            movie_directors.movie_id = movies.id
+            movie_directors.director_id = directors.id
+            movie_genres.movie_id = movies.id
+            movie_genres.genre_id = genres.id
+        """);
 
         return sb.toString();
     }
 
-    // ===== SAFE TABLE LIST =====
     public Set<String> getAllowedTables() {
-        return ALLOWED_TABLES;
+        return Set.copyOf(ALLOWED_TABLES);
     }
 }

@@ -15,145 +15,102 @@ public class AiSchemaService implements AiSchemaServiceImp {
     private final RestTemplate restTemplate = new RestTemplate();
 
     private final SchemaService schemaService;
-    private final SqlExecutionService sqlExecutionService;
     private final EmbeddingService embeddingService;
-    private final VectorServiceImp vectorSearchService;
+    private final VectorServiceImp vectorService;
     private final RagPromptBuilder ragPromptBuilder;
 
     public AiSchemaService(SchemaService schemaService,
-                           SqlExecutionService sqlExecutionService,
                            EmbeddingService embeddingService,
-                           VectorServiceImp vectorSearchService,
+                           VectorServiceImp vectorService,
                            RagPromptBuilder ragPromptBuilder) {
-
         this.schemaService = schemaService;
-        this.sqlExecutionService = sqlExecutionService;
         this.embeddingService = embeddingService;
-        this.vectorSearchService = vectorSearchService;
+        this.vectorService = vectorService;
         this.ragPromptBuilder = ragPromptBuilder;
     }
 
-    @Override
     public String generateSql(String question) {
 
-        if (question == null || question.isBlank()) return null;
-
         try {
 
-            // 1️⃣ Get full schema
+            // 1️⃣ Get schema
             String schema = schemaService.getFullSchema();
 
-            // 2️⃣ Embed user question
-            List<Double> queryVector = embeddingService.embed(question);
+            // 2️⃣ Create embedding
+            List<Double> embedding = embeddingService.embed(question);
 
-            if (queryVector == null || queryVector.isEmpty()) {
+            if (embedding == null) {
                 return null;
             }
 
-            // 3️⃣ Retrieve top 3 similar examples
+            // 3️⃣ Search similar examples (FIXED HERE)
             List<Map<String, String>> examples =
-                    vectorSearchService.search(queryVector, 3);
+                    vectorService.search(embedding, 5);
 
-            // 4️⃣ Build RAG prompt
-            String prompt =
-                    ragPromptBuilder.buildPrompt(schema, question, examples);
-
-            // 5️⃣ Call LLM
-            String sql = callLLM(prompt);
-
-            if (sql == null) return null;
-
-            sql = cleanSql(sql);
-
-            // 6️⃣ Validate SQL
-            validateSql(sql);
-
-            // 7️⃣ Execute to ensure valid
-            sqlExecutionService.execute(sql);
-
-            return sql;
-
-        } catch (Exception e) {
-            System.out.println("RAG SQL generation failed: " + e.getMessage());
-            return null;
-        }
-    }
-
-    // =========================
-    // LLM CALL
-    // =========================
-    private String callLLM(String prompt) {
-
-        try {
-
-            Map<String, Object> body = Map.of(
-                    "model", "deepseek-coder",
-                    "prompt", prompt,
-                    "stream", false,
-                    "temperature", 0
+            // 4️⃣ Build prompt
+            String prompt = ragPromptBuilder.buildPrompt(
+                    schema,
+                    question,
+                    examples
             );
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            // 5️⃣ Call Ollama
+            String response = callOllama(prompt);
 
-            HttpEntity<Map<String, Object>> request =
-                    new HttpEntity<>(body, headers);
-
-            ResponseEntity<Map> response =
-                    restTemplate.postForEntity(
-                            "http://localhost:11434/api/generate",
-                            request,
-                            Map.class
-                    );
-
-            if (response.getBody() == null ||
-                    response.getBody().get("response") == null) {
-                return null;
-            }
-
-            return response.getBody().get("response").toString();
+            return cleanSql(response);
 
         } catch (Exception e) {
-            System.out.println("LLM call failed: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
 
-    // =========================
-    // CLEAN SQL
-    // =========================
-    private String cleanSql(String sql) {
+    private String callOllama(String prompt) {
 
-        if (sql == null) return null;
+        String url = "http://localhost:11434/api/generate";
 
-        return sql.replaceAll("```sql", "")
-                .replaceAll("```", "")
-                .replaceAll(";", "")
-                .replaceAll("\\s+", " ")
-                .trim();
+        Map<String, Object> requestBody = Map.of(
+                "model", "mistral",
+                "prompt", prompt,
+                "stream", false
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, Object>> request =
+                new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<Map> response =
+                restTemplate.postForEntity(url, request, Map.class);
+
+        if (response.getBody() == null) return null;
+
+        return (String) response.getBody().get("response");
     }
 
-    // =========================
-    // VALIDATION
-    // =========================
-    private void validateSql(String sql) {
+    private String cleanSql(String raw) {
 
-        String lower = sql.toLowerCase();
+        if (raw == null) return null;
 
-        if (!lower.startsWith("select")) {
-            throw new RuntimeException("Only SELECT allowed");
+        raw = raw.trim();
+
+        // remove markdown
+        if (raw.startsWith("```")) {
+            raw = raw.replace("```sql", "")
+                    .replace("```", "")
+                    .trim();
         }
 
-        if (lower.contains("drop ") ||
-                lower.contains("delete ") ||
-                lower.contains("update ") ||
-                lower.contains("insert ") ||
-                lower.contains("alter ")) {
-            throw new RuntimeException("Unsafe SQL blocked");
+        // remove explanation if model hallucinated
+        if (raw.contains("\n")) {
+            raw = raw.split("\n")[0];
         }
 
-        if (lower.contains("movies.rating")) {
-            throw new RuntimeException("rating not in movies table");
+        if (!raw.endsWith(";")) {
+            raw = raw + ";";
         }
+
+        return raw;
     }
 }
