@@ -15,19 +15,117 @@ public class RagPromptBuilder {
         StringBuilder sb = new StringBuilder();
 
         sb.append("""
-You are a PROFESSIONAL TEXT-TO-SQL ENGINE.
+
 
 Your task is to convert natural language questions into VALID MySQL SELECT queries.
 
-STRICT RULES:
-1. Only generate SELECT statements.
-2. Use ONLY tables and columns from the provided schema.
-3. Do NOT hallucinate tables or columns.
-4. Use proper JOIN conditions.
-5. If filtering aggregated values → use HAVING, not WHERE.
-6. If asking average rating → use AVG(r.rating) from reviews table.
-7. Always use table aliases.
-8. Never explain. Only output SQL.
+
+
+SOME EXAMPLES: 
+Question: - liệt kê các phim được sản xuất tại Mỹ
+Correct SQL: -SELECT * FROM movies WHERE country = 'USA';
+Reason: country is a direct column in movies table.
+DO NOT JOIN countries table.
+
+IMPORTANT RULES:
+- Use ONLY the exact table and column names shown in the schema.
+- If JOIN creates duplicate rows for identical values, use DISTINCT.
+- When listing unique names/categories/genres/actors/users → prefer SELECT DISTINCT.
+- Avoid duplicate results unless the question explicitly requires all rows.
+- Do NOT invent columns like runtime, length, director, genre, country.
+- duration column is named: duration_minutes
+
+- director is linked via director_id
+- nationality is the correct column name (NOT country)
+- genre requires JOIN movie_genre and genres
+- actor requires JOIN movie_actor and actors
+- Return ONLY pure MySQL query.
+- No explanation.
+- No markdown.
+- No ```sql```
+
+STRICT OUTPUT RULES:
+- Only output final SQL
+- No explanation
+- No comments
+- Only SELECT
+- Use exact table + column names
+- If filter condition exists → must include WHERE
+- If join required → must include
+
+CRITICAL INSTRUCTIONS:
+
+Output ONLY a single valid MySQL SELECT statement.
+DO NOT include explanations, comments, markdown, or code fences.
+DO NOT output anything except the final SQL query.
+The query MUST start with SELECT.
+Use only tables and columns defined in the schema.
+DO NOT invent or assume any column names.
+Column names and table names must match the schema EXACTLY.
+If a condition is mentioned → MUST use WHERE.
+If aggregation is used → MUST use proper GROUP BY.
+If filtering aggregated results → MUST use HAVING.
+If sorting is required → MUST use ORDER BY.
+If limiting results → MUST use LIMIT.
+If relationship is required → MUST use proper JOIN with correct foreign keys.
+Use explicit JOIN syntax (no implicit joins).
+
+
+
+SCHEMA CONSTRAINTS:
+
+duration column name: duration_minutes
+nationality is the correct column name (NOT country)
+Director relationship uses director_id
+Genre requires JOIN movie_genres and genres
+Actor requires JOIN movie_actors and actors
+Reviews link via movie_id and user_id
+Favorites link via movie_id and user_id
+
+
+
+FORBIDDEN:
+
+INSERT, UPDATE, DELETE, DROP, ALTER
+Subqueries unless explicitly required
+Non-MySQL syntax
+Aliases that change column meaning
+Selecting columns that do not exist
+
+RETURN FORMAT:
+
+SELECT ... FROM ... JOIN ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT ...;
+
+
+Country mappings:
+
+- Mỹ → USA
+- Hoa Kỳ → USA
+
+- Nhật → Japan
+- Nhật Bản → Japan
+
+- Hàn → Korea
+- Hàn Quốc → Korea
+
+- Trung Quốc → China
+- Trung → China
+
+- Ấn Độ → India
+- Ấn → India
+
+- Việt Nam → Vietnam
+- Việt → Vietnam
+
+- Anh → United Kingdom
+
+- Pháp → France
+
+- Thái Lan → Thailand
+
+- Hồng Kông → Hong Kong
+
+- Đài Loan → Taiwan
 """);
 
         sb.append("\n\n====================\n");

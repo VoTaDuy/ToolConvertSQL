@@ -2,10 +2,12 @@ package com.example.ToolConvertSQL.Service;
 
 import com.example.ToolConvertSQL.DTO.DatasetItem;
 import com.example.ToolConvertSQL.DTO.EvaluationResult;
+import com.example.ToolConvertSQL.DTO.FailedCase;
 import com.example.ToolConvertSQL.Service.Imp.EvaluationServiceImp;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +26,8 @@ public class EvaluationService implements EvaluationServiceImp  {
 
     public EvaluationResult evaluateAllStrategies(List<DatasetItem> dataset) {
 
+        List<FailedCase> failedCases = new ArrayList<>();
+
         EvaluationResult result = new EvaluationResult();
         result.setTotal(dataset.size());
 
@@ -32,19 +36,39 @@ public class EvaluationService implements EvaluationServiceImp  {
             String predictedSql = aiSchemaService.generateSql(item.getQuestion());
 
             if (predictedSql == null || predictedSql.isBlank()) {
+
+                FailedCase failed = new FailedCase(
+                        item.getId(),
+                        item.getQuestion(),
+                        "",
+                        item.getGroundTruthSql(),
+                        "Generated SQL is null or blank"
+                );
+
+                failedCases.add(failed);
+
                 continue;
             }
 
-            // --- VALID SQL CHECK ---
             boolean valid = isValidSQL(predictedSql);
 
             if (valid) {
                 result.setValidSql(result.getValidSql() + 1);
             } else {
+
+                FailedCase failed = new FailedCase(
+                        item.getId(),
+                        item.getQuestion(),
+                        predictedSql,
+                        item.getGroundTruthSql(),
+                        "Invalid SQL"
+                );
+
+                failedCases.add(failed);
+
                 continue;
             }
 
-            // --- EXECUTION ACCURACY ---
             try {
                 List<Map<String, Object>> predicted =
                         jdbcTemplate.queryForList(predictedSql);
@@ -54,10 +78,44 @@ public class EvaluationService implements EvaluationServiceImp  {
 
                 if (compareResultSets(predicted, groundTruth)) {
                     result.setExecutionCorrect(result.getExecutionCorrect() + 1);
+                } else {
+
+                    FailedCase failed = new FailedCase(
+                            item.getId(),
+                            item.getQuestion(),
+                            predictedSql,
+                            item.getGroundTruthSql(),
+                            "Execution result mismatch"
+                    );
+
+                    failedCases.add(failed);
                 }
 
-            } catch (Exception ignored) {}
+                System.out.println("=================================");
+                System.out.println("QUESTION: " + item.getQuestion());
+                System.out.println("PREDICTED SQL: " + predictedSql);
+                System.out.println("GROUND TRUTH: " + item.getGroundTruthSql());
+
+            } catch (Exception e) {
+
+                FailedCase failed = new FailedCase(
+                        item.getId(),
+                        item.getQuestion(),
+                        predictedSql,
+                        item.getGroundTruthSql(),
+                        e.getMessage()
+                );
+
+                failedCases.add(failed);
+
+                System.out.println("=================================");
+                System.out.println("FAILED QUESTION: " + item.getQuestion());
+                System.out.println("PREDICTED SQL: " + predictedSql);
+                System.out.println("ERROR: " + e.getMessage());
+            }
         }
+
+        result.setFailedCases(failedCases);
 
         return result;
     }

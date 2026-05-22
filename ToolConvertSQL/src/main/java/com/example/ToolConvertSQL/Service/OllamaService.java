@@ -23,11 +23,15 @@ public class OllamaService {
                 """.formatted(question);
 
         Map<String, Object> body = Map.of(
-                "model", "llama3",
+                "model", "qwen2.5-coder:7b",
                 "prompt", prompt,
-                "stream", false
+                "stream", false,
+                "options", Map.of(
+                        "temperature", 0,
+                        "top_p", 1,
+                        "num_predict", 512
+                )
         );
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 

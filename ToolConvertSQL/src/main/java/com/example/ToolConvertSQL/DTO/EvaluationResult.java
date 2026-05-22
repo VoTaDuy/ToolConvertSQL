@@ -1,10 +1,13 @@
 package com.example.ToolConvertSQL.DTO;
 
+import java.util.List;
+
 public class EvaluationResult {
 
     private int total;
     private int validSql;
     private int executionCorrect;
+    private List<FailedCase> failedCases;
 
     public double getVA() {
         return (double) validSql / total;
@@ -36,5 +39,13 @@ public class EvaluationResult {
 
     public void setExecutionCorrect(int executionCorrect) {
         this.executionCorrect = executionCorrect;
+    }
+
+    public List<FailedCase> getFailedCases() {
+        return failedCases;
+    }
+
+    public void setFailedCases(List<FailedCase> failedCases) {
+        this.failedCases = failedCases;
     }
 }

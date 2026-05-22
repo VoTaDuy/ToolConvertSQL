@@ -42,9 +42,9 @@ INSERT INTO directors (full_name, country) VALUES
 ('Christopher Nolan', 'UK'),
 ('Bong Joon-ho', 'Korea');
 
--- ======================
--- MOVIE_GENRES
--- ======================
+
+
+
 INSERT INTO movie_genres (movie_id, genre_id) VALUES
 (1, 1),
 (1, 3),
@@ -54,18 +54,17 @@ INSERT INTO movie_genres (movie_id, genre_id) VALUES
 (3, 2),
 (4, 2);
 
--- ======================
--- MOVIE_ACTORS
--- ======================
+
+
+
 INSERT INTO movie_actors (movie_id, actor_id, role_name) VALUES
 (1, 1, 'Cobb'),
 (1, 2, 'Arthur'),
 (2, 3, 'Cooper'),
 (3, 4, 'Batman');
 
--- ======================
--- MOVIE_DIRECTORS
--- ======================
+
+
 INSERT INTO movie_directors (movie_id, director_id) VALUES
 (1, 1),
 (2, 1),
@@ -91,9 +90,8 @@ INSERT INTO favorites (user_id, movie_id, created_at) VALUES
 (2, 3, NOW()),
 (3, 4, NOW());
 
--- ======================
--- SYNC AVG RATING
--- ======================
+
+
 UPDATE movies m
 JOIN (
     SELECT movie_id, AVG(rating) AS avg_r

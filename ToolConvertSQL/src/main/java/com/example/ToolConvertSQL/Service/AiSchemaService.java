@@ -33,28 +33,24 @@ public class AiSchemaService implements AiSchemaServiceImp {
 
         try {
 
-            // 1️⃣ Get schema
             String schema = schemaService.getFullSchema();
 
-            // 2️⃣ Create embedding
             List<Double> embedding = embeddingService.embed(question);
 
             if (embedding == null) {
                 return null;
             }
 
-            // 3️⃣ Search similar examples (FIXED HERE)
+
             List<Map<String, String>> examples =
                     vectorService.search(embedding, 5);
 
-            // 4️⃣ Build prompt
             String prompt = ragPromptBuilder.buildPrompt(
                     schema,
                     question,
                     examples
             );
 
-            // 5️⃣ Call Ollama
             String response = callOllama(prompt);
 
             return cleanSql(response);

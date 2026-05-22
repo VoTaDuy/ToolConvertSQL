@@ -1,57 +1,57 @@
 [
   {
     "id": 1,
-    "question": "List all users.",
+    "question": "danh sách toàn bộ người dùng",
     "ground_truth_sql": "SELECT * FROM users;"
   },
   {
     "id": 2,
-    "question": "Show the email of all users.",
-    "ground_truth_sql": "SELECT email FROM users;"
+    "question": "danh sách toàn bộ email của người dùng",
+    "ground_truth_sql": "SELECT users.email FROM users;"
   },
   {
     "id": 3,
-    "question": "List all movies.",
+    "question": "danh sách toàn bộ phim",
     "ground_truth_sql": "SELECT * FROM movies;"
   },
   {
     "id": 4,
-    "question": "List movie titles and release years.",
-    "ground_truth_sql": "SELECT title, release_year FROM movies;"
+    "question": "danh sách tên phim và năm ra mắt",
+    "ground_truth_sql": "SELECT movies.title, movies.release_year FROM movies;"
   },
   {
     "id": 5,
-    "question": "Find movies released after 2020.",
-    "ground_truth_sql": "SELECT * FROM movies WHERE release_year > 2020;"
+    "question": "Find movies released after 2010.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE release_year > 2010;"
   },
   {
     "id": 6,
-    "question": "Find movies longer than 120 minutes.",
-    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes > 120;"
+    "question": "danh sách movie với thời lượng bé hơn 140 phút",
+    "ground_truth_sql": "SELECT movies.* FROM movies WHERE duration_minutes < 140;"
   },
   {
     "id": 7,
-    "question": "List all genres.",
-    "ground_truth_sql": "SELECT * FROM genres;"
+    "question": "danh sách toàn bộ thể loại phim",
+    "ground_truth_sql": "SELECT DISTINCT genres.name FROM genres JOIN movie_genres ON genres.id = movie_genres.genre_id;"
   },
   {
     "id": 8,
-    "question": "List all actors.",
-    "ground_truth_sql": "SELECT * FROM actors;"
+    "question": "danh sách tất cả diễn viên",
+    "ground_truth_sql": "SELECT DISTINCT actors.id, actors.full_name FROM actors;"
   },
   {
     "id": 9,
-    "question": "List all directors.",
-    "ground_truth_sql": "SELECT * FROM directors;"
+    "question": "danh sách tất cả đạo diễn",
+    "ground_truth_sql": "SELECT DISTINCT directors.id, directors.full_name FROM directors;"
   },
   {
     "id": 10,
-    "question": "Find movies with age rating 'PG-13'.",
-    "ground_truth_sql": "SELECT * FROM movies WHERE age_rating = 'PG-13';"
+    "question": "danh sách các phim sản xuất tại hàn quốc",
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'Korea';"
   },
   {
     "id": 11,
-    "question": "List movies produced in USA.",
+    "question": "danh sách các phim sản xuất tại hoa kỳ",
     "ground_truth_sql": "SELECT * FROM movies WHERE country = 'USA';"
   },
   {
@@ -61,18 +61,18 @@
   },
   {
     "id": 13,
-    "question": "List movies in English language.",
+    "question": "danh sách phim tiếng anh.",
     "ground_truth_sql": "SELECT * FROM movies WHERE language = 'English';"
   },
   {
     "id": 14,
-    "question": "Get all reviews.",
-    "ground_truth_sql": "SELECT * FROM reviews;"
+    "question": "Danh sách đánh giá phim.",
+    "ground_truth_sql": "SELECT reviews.* FROM reviews JOIN movies ON reviews.movie_id = movies.id;"
   },
   {
     "id": 15,
-    "question": "Find reviews with rating = 5.",
-    "ground_truth_sql": "SELECT * FROM reviews WHERE rating = 5;"
+      "question": "Find reviews with rating = 8.",
+    "ground_truth_sql": "SELECT * FROM reviews WHERE rating = 8;"
   },
   {
     "id": 16,
@@ -81,13 +81,13 @@
   },
   {
     "id": 17,
-    "question": "Find users who created accounts after 2023.",
-    "ground_truth_sql": "SELECT * FROM users WHERE YEAR(created_at) > 2023;"
+    "question": "danh sách các phim sản xuất tại Nhật bản",
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'Japan';"
   },
   {
     "id": 18,
-    "question": "List movies with duration under 90 minutes.",
-    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes < 90;"
+    "question": "List movies with duration under 150 minutes.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes < 150;"
   },
   {
     "id": 19,
@@ -97,7 +97,7 @@
   {
     "id": 20,
     "question": "Get id and title of movies.",
-    "ground_truth_sql": "SELECT id, title FROM movies;"
+    "ground_truth_sql": "SELECT movies.id, movies.title FROM movies;"
   },
   {
     "id": 21,
@@ -117,12 +117,12 @@
   {
     "id": 24,
     "question": "Show reviews with user names.",
-    "ground_truth_sql": "SELECT r.*, u.full_name FROM reviews r JOIN users u ON r.user_id = u.id;"
+    "ground_truth_sql": "SELECT users.full_name, reviews.* FROM reviews JOIN users ON reviews.user_id = users.id;"
   },
   {
     "id": 25,
     "question": "List reviews with movie titles.",
-    "ground_truth_sql": "SELECT r.*, m.title FROM reviews r JOIN movies m ON r.movie_id = m.id;"
+    "ground_truth_sql": "SELECT movies.title, reviews.* FROM movies JOIN reviews ON movies.id = reviews.movie_id;"
   },
   {
     "id": 26,
@@ -167,17 +167,17 @@
   {
     "id": 34,
     "question": "List users who have not reviewed any movies.",
-    "ground_truth_sql": "SELECT u.full_name FROM users u LEFT JOIN reviews r ON u.id = r.user_id WHERE r.id IS NULL;"
+    "ground_truth_sql": "SELECT DISTINCT `users`.`id`, `users`.`full_name` FROM `users` LEFT JOIN `reviews` ON `users`.`id` = `reviews`.`user_id` WHERE `reviews`.`movie_id` IS NULL;"
   },
   {
     "id": 35,
     "question": "List actors and their roles.",
-    "ground_truth_sql": "SELECT a.full_name, ma.role_name FROM movie_actors ma JOIN actors a ON ma.actor_id = a.id;"
+    "ground_truth_sql": "SELECT actors.full_name, movie_actors.role_name FROM actors JOIN movie_actors ON actors.id = movie_actors.actor_id;"
   },
   {
     "id": 36,
-    "question": "List movies with review rating above 4.",
-    "ground_truth_sql": "SELECT DISTINCT m.title FROM movies m JOIN reviews r ON m.id = r.movie_id WHERE r.rating > 4;"
+    "question": "List movies with review rating above 9.",
+    "ground_truth_sql": "SELECT * FROM movies JOIN reviews ON movies.id = reviews.movie_id WHERE reviews.rating > 9;"
   },
   {
     "id": 37,
