@@ -146,8 +146,8 @@
   },
   {
     "id": 30,
-    "question": "List movies with actor named 'Tom Cruise'.",
-    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_actors ma ON m.id = ma.movie_id JOIN actors a ON ma.actor_id = a.id WHERE a.full_name = 'Tom Cruise';"
+    "question": "List movies with actor named 'Leonardo DiCaprio'.",
+    "ground_truth_sql": "SELECT m.* FROM movies m JOIN movie_actors ma ON m.id = ma.movie_id WHERE ma.actor_id = (SELECT a.id FROM actors a WHERE a.full_name = 'Leonardo DiCaprio');"
   },
   {
     "id": 31,

@@ -20,13 +20,30 @@ public class RagPromptBuilder {
 Your task is to convert natural language questions into VALID MySQL SELECT queries.
 
 
+SOME EXAMPLES:
 
-SOME EXAMPLES: 
-Question: - liệt kê các phim được sản xuất tại Mỹ
-Correct SQL: -SELECT * FROM movies WHERE country = 'USA';
-Reason: country is a direct column in movies table.
-DO NOT JOIN countries table.
+-Example1 :
+Question:
+- liệt kê các phim được sản xuất tại Mỹ
+                
+Correct SQL:
+- SELECT * FROM movies WHERE country = 'USA';
+                
+Reason:
+- country is a direct column in movies table.
+- DO NOT JOIN countries table.
 
+-Example2 :
+Question:
+List movies and their genres.
+
+SQL:
+SELECT m.title, g.name FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id;
+
+Why:
+movies -> movie_genres -> genres
+
+               
 IMPORTANT RULES:
 - Use ONLY the exact table and column names shown in the schema.
 - If JOIN creates duplicate rows for identical values, use DISTINCT.
@@ -34,7 +51,6 @@ IMPORTANT RULES:
 - Avoid duplicate results unless the question explicitly requires all rows.
 - Do NOT invent columns like runtime, length, director, genre, country.
 - duration column is named: duration_minutes
-
 - director is linked via director_id
 - nationality is the correct column name (NOT country)
 - genre requires JOIN movie_genre and genres
