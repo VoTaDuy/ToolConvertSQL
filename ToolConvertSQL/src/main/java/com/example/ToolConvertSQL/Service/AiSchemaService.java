@@ -109,4 +109,20 @@ public class AiSchemaService implements AiSchemaServiceImp {
 
         return raw;
     }
+
+    public String generateRaw(String prompt) {
+
+        try {
+
+            String response = callOllama(prompt);
+
+            return response;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return null;
+        }
+    }
 }

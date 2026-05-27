@@ -247,6 +247,6 @@
   {
     "id": 50,
     "question": "Count number of movies by country.",
-    "ground_truth_sql": "SELECT country, COUNT(*) FROM movies GROUP BY country;"
+    "ground_truth_sql": "SELECT `country`, COUNT(`movies`.`id`) as total FROM `movies` GROUP BY `country`;"
   }
 ]
