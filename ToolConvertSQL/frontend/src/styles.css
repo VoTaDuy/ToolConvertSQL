@@ -243,6 +243,102 @@ pre {
   overflow-x: auto;
 }
 
+.excel-shell {
+  max-height: 430px;
+  overflow: auto;
+  background: #ffffff;
+  border-top: 1px solid #d9e2ec;
+}
+
+.excel-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #1f2937;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 0.86rem;
+  table-layout: fixed;
+}
+
+.excel-table th,
+.excel-table td {
+  height: 34px;
+  min-width: 150px;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-right: 1px solid #d9e2ec;
+  border-bottom: 1px solid #d9e2ec;
+  background: #ffffff;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.excel-table thead th {
+  position: sticky;
+  z-index: 3;
+}
+
+.excel-column-row th {
+  top: 0;
+  height: 28px;
+  background: #f3f6f9;
+  color: #465669;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.excel-field-row th {
+  top: 28px;
+  background: #eef7f0;
+  color: #174a2a;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.excel-table .excel-corner,
+.excel-table .excel-row-number {
+  left: 0;
+  min-width: 48px;
+  width: 48px;
+  max-width: 48px;
+  text-align: center;
+  color: #586575;
+  background: #f3f6f9;
+  font-weight: 700;
+}
+
+.excel-table .excel-corner {
+  z-index: 5;
+}
+
+.excel-table .excel-row-number {
+  position: sticky;
+  z-index: 2;
+}
+
+.excel-field-row .excel-row-number {
+  z-index: 4;
+}
+
+.excel-table tbody tr:hover td,
+.excel-table tbody tr:hover .excel-row-number {
+  background: #fff8db;
+}
+
+.excel-cell:focus,
+.excel-cell:hover {
+  outline: 2px solid #22c55e;
+  outline-offset: -2px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

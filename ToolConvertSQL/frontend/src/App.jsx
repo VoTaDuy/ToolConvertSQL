@@ -1,7 +1,80 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8082";
+
+const getColumnLabel = (index) => {
+  let label = "";
+  let cursor = index + 1;
+
+  while (cursor > 0) {
+    const remainder = (cursor - 1) % 26;
+    label = String.fromCharCode(65 + remainder) + label;
+    cursor = Math.floor((cursor - 1) / 26);
+  }
+
+  return label;
+};
+
+const formatCellValue = (value) => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
+
+function ExcelResultTable({ columns, rows }) {
+  return (
+    <div className="excel-shell">
+      <table className="excel-table">
+        <thead>
+          <tr className="excel-column-row">
+            <th className="excel-corner" aria-label="row selector" />
+            {columns.map((column, index) => (
+              <th key={`${column}-${index}-letter`} className="excel-column-letter">
+                {getColumnLabel(index)}
+              </th>
+            ))}
+          </tr>
+          <tr className="excel-field-row">
+            <th className="excel-row-number">1</th>
+            {columns.map((column, index) => (
+              <th key={`${column}-${index}`} className="excel-field-cell" title={column}>
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              <th className="excel-row-number">{rowIndex + 2}</th>
+              {columns.map((column, cellIndex) => {
+                const rawValue = Array.isArray(row) ? row[cellIndex] : row?.[column];
+                const cellValue = formatCellValue(rawValue);
+
+                return (
+                  <td
+                    key={`${rowIndex}-${column}-${cellIndex}`}
+                    className="excel-cell"
+                    title={cellValue}
+                  >
+                    {cellValue}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function ResultPanel({ title, data, loading, execution, onRate }) {
   const [rated, setRated] = useState(false);
@@ -105,30 +178,7 @@ function ResultPanel({ title, data, loading, execution, onRate }) {
                 
                 <div style={{ backgroundColor: '#ffffff', padding: '0', flexGrow: 1 }}>
                   {Array.isArray(columns) && columns.length > 0 ? (
-                    <div className="table-wrap" style={{ maxHeight: '350px', overflowY: 'auto', margin: 0 }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 1 }}>
-                          <tr>
-                            {columns.map((column) => (
-                              <th key={column} style={{ padding: '10px 15px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontSize: '0.85rem', color: '#475569', fontWeight: '600' }}>
-                                {column}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.map((row, index) => (
-                            <tr key={`${index}-${row.join("-")}`} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                              {row.map((cell, cellIndex) => (
-                                <td key={`${index}-${cellIndex}`} style={{ padding: '10px 15px', fontSize: '0.85rem', color: '#334155' }}>
-                                  {String(cell)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <ExcelResultTable columns={columns} rows={rows} />
                   ) : (
                     <div style={{ padding: '20px', color: '#64748b', fontSize: '0.9rem' }}>
                       {data.result ? <pre style={{margin: 0, fontSize: '0.85rem'}}>{JSON.stringify(data.result, null, 2)}</pre> : "Không có dữ liệu trả về."}
