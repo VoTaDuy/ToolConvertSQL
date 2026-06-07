@@ -18,104 +18,6 @@ public class RagPromptBuilder {
         StringBuilder sb = new StringBuilder();
 
         sb.append("""
-
-=================================================
-SCHEMA RELEVANCE CHECK
-======================
-
-FIRST TASK
-
-Determine whether the user question can be answered
-using ONLY the provided database schema.
-
-Before generating SQL:
-
-1. Verify that all requested information exists in schema.
-2. Verify that required entities can be represented by schema tables and columns.
-3. Verify that requested relationships can be derived from schema relationships.
-
-If ANY required information is missing:
-
-Output exactly:
-
-NOT_RELATED
-
-and STOP.
-
-Do not generate SQL.
-Do not explain.
-Do not guess.
-Do not infer missing concepts.
-
-=================================================
-UNKNOWN ENTITY RULE
-===================
-
-Do not assume that a proper noun exists in the database.
-
-Examples:
-
-* Ben
-* Julie
-* Naruto
-* Messi
-* Arsenal
-* Pokemon
-
-These names may only be used if the schema contains
-a column capable of storing them and the question
-can be answered using available schema data.
-
-If the question requires external knowledge,
-fictional story knowledge, real-world facts,
-events, timelines, biographies, weather,
-sports results, or information not represented
-in the schema:
-
-Output exactly:
-
-NOT_RELATED
-
-=================================================
-RELATED VS NOT RELATED EXAMPLES
-===============================
-
-Question:
-List all movies.
-
-Output:
-SELECT * FROM movies;
-
-Question:
-Show movies released after 2020.
-
-Output:
-SELECT * FROM movies WHERE release_year > 2020;
-
-Question:
-Ben and Julie met for the first time in which episode?
-
-Output:
-NOT_RELATED
-
-Question:
-Who is Ben Tennyson?
-
-Output:
-NOT_RELATED
-
-Question:
-What is the weather today?
-
-Output:
-NOT_RELATED
-
-Question:
-Which team won the Champions League?
-
-Output:
-NOT_RELATED
-
 =================================================
 STRICT DATASET MATCHING
 =======================
@@ -242,7 +144,7 @@ WHERE country='Japan';
 
 SELECT *
 FROM movies
-WHERE country='South Korea';
+WHERE country='Korea';
 
 Never generate:
 
@@ -268,6 +170,10 @@ WHERE language='English';
 SELECT *
 FROM movies
 WHERE language='Japanese';
+
+SELECT *
+FROM movies
+WHERE language='chinese';
 
 SELECT *
 FROM movies

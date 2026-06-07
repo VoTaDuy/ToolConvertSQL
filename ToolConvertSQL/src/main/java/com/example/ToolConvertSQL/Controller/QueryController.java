@@ -16,6 +16,7 @@ import java.util.Map;
 @RequestMapping("/generate")
 public class QueryController {
 
+
     private final QueryGenerateService ruleService;
     private final OllamaService ollamaService;
     private final SqlExecutionService sqlExecutionService;
@@ -26,8 +27,8 @@ public class QueryController {
     private final QuestionDecomposerService questionDecomposerService;
     private final SQLRefinerService sqlRefinerService;
 
-    // NEW
     private final IntentDetectionService intentDetectionService;
+    private final QueryNormalizerService queryNormalizerService;
 
     public QueryController(
             QueryGenerateService ruleService,
@@ -38,7 +39,8 @@ public class QueryController {
             SchemaSelectorService schemaSelectorService,
             QuestionDecomposerService questionDecomposerService,
             SQLRefinerService sqlRefinerService,
-            IntentDetectionService intentDetectionService
+            IntentDetectionService intentDetectionService,
+            QueryNormalizerService queryNormalizerService
     ) {
         this.ruleService = ruleService;
         this.ollamaService = ollamaService;
@@ -51,20 +53,23 @@ public class QueryController {
         this.sqlRefinerService = sqlRefinerService;
 
         this.intentDetectionService = intentDetectionService;
+        this.queryNormalizerService = queryNormalizerService;
     }
 
     private String cleanSql(String sql) {
 
-        if (sql == null) return null;
+        if (sql == null) {
+            return null;
+        }
 
         sql = sql.replace("```sql", "");
         sql = sql.replace("```", "");
         sql = sql.trim();
 
-        int index = sql.toLowerCase().indexOf("select");
+        int selectIndex = sql.toLowerCase().indexOf("select");
 
-        if (index != -1) {
-            sql = sql.substring(index);
+        if (selectIndex != -1) {
+            sql = sql.substring(selectIndex);
         }
 
         if (!sql.endsWith(";")) {
@@ -80,14 +85,27 @@ public class QueryController {
             @RequestBody QueryRequest request
     ) {
 
-        String sql;
-
         try {
 
-            String question = request.getQuestion();
+            // =====================================
+            // QUERY NORMALIZATION
+            // =====================================
+
+            String originalQuestion =
+                    request.getQuestion();
+
+            String question =
+                    queryNormalizerService
+                            .normalize(originalQuestion);
+
+            System.out.println("========== ORIGINAL QUESTION ==========");
+            System.out.println(originalQuestion);
+
+            System.out.println("========== NORMALIZED QUESTION ==========");
+            System.out.println(question);
 
             // =====================================
-            // INTENT DETECTION GATEWAY
+            // INTENT DETECTION
             // =====================================
 
             IntentResult intent =
@@ -97,6 +115,8 @@ public class QueryController {
             System.out.println("Category   : " + intent.getCategory());
             System.out.println("Confidence : " + intent.getConfidence());
             System.out.println("Reason     : " + intent.getReason());
+
+
 
             switch (intent.getCategory()) {
 
@@ -131,19 +151,33 @@ public class QueryController {
                     );
             }
 
+            // =====================================
+            // QUESTION DECOMPOSITION
+            // =====================================
 
             String decomposition =
-                    questionDecomposerService.decompose(question);
+                    questionDecomposerService
+                            .decompose(question);
+
+            System.out.println("========== DECOMPOSITION ==========");
+            System.out.println(decomposition);
+
+            // =====================================
+            // SCHEMA SELECTION
+            // =====================================
 
             String filteredSchema =
                     schemaSelectorService
                             .selectRelevantSchema(question);
 
-            System.out.println("========== DECOMPOSITION ==========");
-            System.out.println(decomposition);
-
             System.out.println("========== FILTERED SCHEMA ==========");
             System.out.println(filteredSchema);
+
+            // =====================================
+            // SQL GENERATION
+            // =====================================
+
+            String sql;
 
             if ("rule".equalsIgnoreCase(method)) {
 
@@ -182,6 +216,10 @@ public class QueryController {
                 );
             }
 
+            // =====================================
+            // SQL SAFETY CHECK
+            // =====================================
+
             if (!sqlSafetyService.isSafe(sql)) {
 
                 return new QueryResponse(
@@ -189,6 +227,10 @@ public class QueryController {
                         null
                 );
             }
+
+            // =====================================
+            // EXECUTE SQL
+            // =====================================
 
             try {
 
@@ -204,6 +246,10 @@ public class QueryController {
 
                 System.out.println("========== SQL FAILED ==========");
                 System.out.println(ex.getMessage());
+
+                // =====================================
+                // SQL REFINEMENT
+                // =====================================
 
                 String refinedSql =
                         sqlRefinerService.refine(
@@ -227,7 +273,9 @@ public class QueryController {
                 }
 
                 List<Map<String, Object>> refinedResult =
-                        sqlExecutionService.execute(refinedSql);
+                        sqlExecutionService.execute(
+                                refinedSql
+                        );
 
                 return new QueryResponse(
                         refinedSql,
@@ -245,4 +293,6 @@ public class QueryController {
             );
         }
     }
+
+
 }

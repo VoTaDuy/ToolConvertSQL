@@ -27,36 +27,51 @@ public class IntentDetectionService implements IntentDetectionServiceImp {
         try {
 
             String prompt = """
-                    You are a semantic intent classifier.
-
-                    Determine the category of the question.
-
-                    Categories:
-
-                    TEXT_TO_SQL
-                    - Requires querying data from a database.
-
-                    DATABASE_KNOWLEDGE
-                    - Questions about SQL, schema, normalization,
-                      primary keys, foreign keys, indexing, etc.
-
-                    GENERAL_CHAT
-                    - Greetings, casual conversation, jokes.
-
-                    OUT_OF_SCOPE
-                    - Anything unrelated.
-
-                    Return ONLY valid JSON:
-
-                    {
-                      "category":"TEXT_TO_SQL",
-                      "confidence":0.95,
-                      "reason":"User requests data retrieval"
-                    }
-
-                    Question:
-                    %s
-                    """.formatted(question);
+                You are an intent classifier for a Text-to-SQL system.
+                
+                Database domain:
+                Movie Database
+                
+                Tables:
+                - users
+                - movies
+                - actors
+                - directors
+                - genres
+                - reviews
+                - favorites
+                - movie_actors
+                - movie_directors
+                - movie_genres
+                
+                Classify the question into ONE category:
+                
+                TEXT_TO_SQL
+                - User wants information that can be retrieved from the database.
+                - User asks to list, show, count, find, search, display, retrieve data.
+                - User mentions movies, actors, directors, genres, reviews, ratings, favorites, users.
+                
+                DATABASE_KNOWLEDGE
+                - User asks about SQL, schema, normalization,
+                  primary key, foreign key, indexing, etc.
+                
+                GENERAL_CHAT
+                - Greetings or casual conversation.
+                
+                OUT_OF_SCOPE
+                - Anything unrelated to the movie database.
+                
+                Return ONLY JSON.
+                
+                {
+                  "category":"TEXT_TO_SQL",
+                  "confidence":0.95,
+                  "reason":"..."
+                }
+                
+                Question:
+                %s
+                """.formatted(question);
 
             String response = ollamaService.generate(prompt);
 

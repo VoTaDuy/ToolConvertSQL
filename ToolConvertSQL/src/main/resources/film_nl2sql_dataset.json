@@ -12,7 +12,7 @@
   {
     "id": 53,
     "question": "Liệt kê người dùng có email chứa gmail.",
-    "ground_truth_sql": "SELECT * FROM users WHERE email LIKE '%gmail%';"
+    "ground_truth_sql": "SELECT * FROM users WHERE email LIKE '%@gmail.com';"
   },
   {
     "id": 54,
@@ -92,7 +92,7 @@
   {
     "id": 69,
     "question": "Liệt kê phim do đạo diễn người Hàn Quốc thực hiện.",
-    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'South Korea';"
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'Korea';"
   },
   {
     "id": 70,
@@ -201,7 +201,7 @@
   },
   {
     "id": 91,
-    "question": "Liệt kê tên phim cùng quốc gia sản xuất.",
+      "question": "Liệt kê tên phim và quốc gia sản xuất.",
     "ground_truth_sql": "SELECT title, country FROM movies;"
   },
   {
