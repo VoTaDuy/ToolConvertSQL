@@ -1,9 +1,10 @@
 package com.example.ToolConvertSQL.Controller;
 
+import com.example.ToolConvertSQL.DTO.IntentCategory;
+import com.example.ToolConvertSQL.DTO.IntentResult;
 import com.example.ToolConvertSQL.DTO.QueryRequest;
 import com.example.ToolConvertSQL.DTO.QueryResponse;
 import com.example.ToolConvertSQL.Service.*;
-
 import com.example.ToolConvertSQL.Service.Imp.AiSchemaServiceImp;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +22,12 @@ public class QueryController {
     private final SqlSafetyService sqlSafetyService;
     private final AiSchemaServiceImp aiSchemaServiceImp;
 
-    // NEW
     private final SchemaSelectorService schemaSelectorService;
     private final QuestionDecomposerService questionDecomposerService;
     private final SQLRefinerService sqlRefinerService;
+
+    // NEW
+    private final IntentDetectionService intentDetectionService;
 
     public QueryController(
             QueryGenerateService ruleService,
@@ -32,11 +35,10 @@ public class QueryController {
             SqlExecutionService sqlExecutionService,
             AiSchemaServiceImp aiSchemaServiceImp,
             SqlSafetyService sqlSafetyService,
-
-            // NEW
             SchemaSelectorService schemaSelectorService,
             QuestionDecomposerService questionDecomposerService,
-            SQLRefinerService sqlRefinerService
+            SQLRefinerService sqlRefinerService,
+            IntentDetectionService intentDetectionService
     ) {
         this.ruleService = ruleService;
         this.ollamaService = ollamaService;
@@ -44,18 +46,19 @@ public class QueryController {
         this.aiSchemaServiceImp = aiSchemaServiceImp;
         this.sqlSafetyService = sqlSafetyService;
 
-        // NEW
         this.schemaSelectorService = schemaSelectorService;
         this.questionDecomposerService = questionDecomposerService;
         this.sqlRefinerService = sqlRefinerService;
+
+        this.intentDetectionService = intentDetectionService;
     }
 
     private String cleanSql(String sql) {
 
         if (sql == null) return null;
 
-        sql = sql.replaceAll("```sql", "");
-        sql = sql.replaceAll("```", "");
+        sql = sql.replace("```sql", "");
+        sql = sql.replace("```", "");
         sql = sql.trim();
 
         int index = sql.toLowerCase().indexOf("select");
@@ -83,13 +86,54 @@ public class QueryController {
 
             String question = request.getQuestion();
 
-            // =========================
-            // MAC-SQL STYLE COMPONENTS
-            // =========================
+            // =====================================
+            // INTENT DETECTION GATEWAY
+            // =====================================
+
+            IntentResult intent =
+                    intentDetectionService.detect(question);
+
+            System.out.println("========== INTENT ==========");
+            System.out.println("Category   : " + intent.getCategory());
+            System.out.println("Confidence : " + intent.getConfidence());
+            System.out.println("Reason     : " + intent.getReason());
+
+            switch (intent.getCategory()) {
+
+                case TEXT_TO_SQL:
+                    break;
+
+                case DATABASE_KNOWLEDGE:
+                    return new QueryResponse(
+                            "Rejected: DATABASE_KNOWLEDGE - "
+                                    + intent.getReason(),
+                            null
+                    );
+
+                case GENERAL_CHAT:
+                    return new QueryResponse(
+                            "Rejected: GENERAL_CHAT - "
+                                    + intent.getReason(),
+                            null
+                    );
+
+                case OUT_OF_SCOPE:
+                    return new QueryResponse(
+                            "Rejected: OUT_OF_SCOPE - "
+                                    + intent.getReason(),
+                            null
+                    );
+
+                default:
+                    return new QueryResponse(
+                            "Unknown intent category",
+                            null
+                    );
+            }
+
 
             String decomposition =
-                    questionDecomposerService
-                            .decompose(question);
+                    questionDecomposerService.decompose(question);
 
             String filteredSchema =
                     schemaSelectorService
@@ -101,10 +145,6 @@ public class QueryController {
             System.out.println("========== FILTERED SCHEMA ==========");
             System.out.println(filteredSchema);
 
-            // =========================
-            // GENERATE SQL
-            // =========================
-
             if ("rule".equalsIgnoreCase(method)) {
 
                 sql = ruleService.generateSql(question);
@@ -115,7 +155,11 @@ public class QueryController {
 
             } else if ("aiSchema".equalsIgnoreCase(method)) {
 
-                sql = aiSchemaServiceImp.generateSql(question);
+                sql = aiSchemaServiceImp.generateSqlWithSchema(
+                        question,
+                        filteredSchema,
+                        decomposition
+                );
 
             } else {
 
@@ -146,25 +190,20 @@ public class QueryController {
                 );
             }
 
-            // =========================
-            // EXECUTE SQL
-            // =========================
-
             try {
 
                 List<Map<String, Object>> result =
                         sqlExecutionService.execute(sql);
 
-                return new QueryResponse(sql, result);
+                return new QueryResponse(
+                        sql,
+                        result
+                );
 
             } catch (Exception ex) {
 
                 System.out.println("========== SQL FAILED ==========");
                 System.out.println(ex.getMessage());
-
-                // =========================
-                // SQL REFINER
-                // =========================
 
                 String refinedSql =
                         sqlRefinerService.refine(

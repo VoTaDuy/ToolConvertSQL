@@ -41,16 +41,23 @@ public class SqlExecutionService {
 
         String lower = sql.toLowerCase();
 
-        for (String table : ALLOWED_TABLES) {
-            if (lower.contains(" " + table + " ")) continue;
+        if (lower.contains("drop ")
+                || lower.contains("delete ")
+                || lower.contains("update ")
+                || lower.contains("insert ")
+                || lower.contains("alter ")
+                || lower.contains("truncate ")) {
+
+            throw new RuntimeException(
+                    "Blocked unsafe SQL"
+            );
         }
 
-        if (lower.contains("drop ") ||
-                lower.contains("delete ") ||
-                lower.contains("update ") ||
-                lower.contains("insert ") ||
-                lower.contains("alter ")) {
-            throw new RuntimeException("Blocked unsafe SQL");
+        if (!lower.trim().startsWith("select")) {
+
+            throw new RuntimeException(
+                    "Only SELECT queries are allowed"
+            );
         }
     }
 }

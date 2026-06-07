@@ -1,131 +1,252 @@
 [
   {
-    "id": 1,
-    "difficulty": "easy",
-    "question": "List all movies.",
-    "sql": "SELECT * FROM movies;"
+    "id": 51,
+    "question": "Liệt kê phim có năm phát hành trước 2000.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE release_year < 2000;"
   },
   {
-    "id": 2,
-    "difficulty": "easy",
-    "question": "Show the titles of all movies.",
-    "sql": "SELECT title FROM movies;"
+    "id": 52,
+    "question": "Liệt kê phim có avg_rating từ 9 trở lên.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE avg_rating >= 9;"
   },
   {
-    "id": 3,
-    "difficulty": "easy",
-    "question": "List movies released after 2010.",
-    "sql": "SELECT title, release_year FROM movies WHERE release_year > 2010;"
-  },
-
-  {
-    "id": 4,
-    "difficulty": "easy",
-    "question": "Find movies with rating greater than 8.",
-    "sql": "SELECT m.title, AVG(r.rating) AS avg_rating FROM movies m JOIN reviews r ON m.id = r.movie_id GROUP BY m.id, m.title HAVING AVG(r.rating) > 8;"
-  },
-
-  {
-    "id": 5,
-    "difficulty": "easy",
-    "question": "Show movies released in 2023.",
-    "sql": "SELECT * FROM movies WHERE release_year = 2023;"
+    "id": 53,
+    "question": "Liệt kê người dùng có email chứa gmail.",
+    "ground_truth_sql": "SELECT * FROM users WHERE email LIKE '%gmail%';"
   },
   {
-    "id": 6,
-    "difficulty": "easy",
-    "question": "List movies longer than 120 minutes.",
-    "sql": "SELECT m.title FROM movies m WHERE m.duration_minutes > 120;\","
+    "id": 54,
+    "question": "Liệt kê diễn viên đến từ USA.",
+    "ground_truth_sql": "SELECT * FROM actors WHERE country = 'USA';"
   },
   {
-    "id": 7,
-    "difficulty": "easy",
-    "question": "Find directors from the United States.",
-    "sql": "SELECT DISTINCT d.full_name FROM movie_directors md JOIN directors d ON md.director_id = d.id WHERE d.country = 'United States';"
+    "id": 55,
+    "question": "Liệt kê đạo diễn đến từ Japan.",
+    "ground_truth_sql": "SELECT * FROM directors WHERE country = 'Japan';"
   },
   {
-    "id": 8,
-    "difficulty": "easy",
-    "question": "Show actors from the United Kingdom.",
-    "sql": "SELECT DISTINCT d.full_name FROM movie_directors md JOIN directors d ON md.director_id = d.id WHERE d.country = 'United Kingdom';"
+    "id": 56,
+    "question": "Liệt kê phim có thời lượng lớn hơn 180 phút.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes > 180;"
   },
   {
-    "id": 9,
-    "difficulty": "easy",
-    "question": "List all movie genres.",
-    "sql": "SELECT name FROM genres;"
-  },
-
-  {
-    "id": 10,
-    "difficulty": "easy",
-    "question": "Find movies with rating between 7 and 9.",
-    "sql": "SELECT m.title, AVG(r.rating) AS avg_rating FROM movies m JOIN reviews r ON m.id = r.movie_id GROUP BY m.id, m.title HAVING AVG(r.rating) BETWEEN 7 AND 9;"
-  },
-
-  {
-    "id": 11,
-    "difficulty": "medium",
-    "question": "List movies directed by Christopher Nolan.",
-    "sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.full_name = 'Christopher Nolan';"
+    "id": 57,
+    "question": "Liệt kê phim được phát hành năm 2020.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE release_year = 2020;"
   },
   {
-    "id": 12,
-    "difficulty": "medium",
-    "question": "Show movie titles with their director names.",
-    "sql": "SELECT m.title, d.full_name AS director_name FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id;"
+    "id": 58,
+    "question": "Liệt kê phim có ngôn ngữ là Japanese.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE language = 'Japanese';"
   },
   {
-    "id": 13,
-    "difficulty": "medium",
-    "question": "List movies in the Action genre.",
-    "sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Action';"
+    "id": 59,
+    "question": "Liệt kê tên và email người dùng.",
+    "ground_truth_sql": "SELECT full_name, email FROM users;"
   },
   {
-    "id": 14,
-    "difficulty": "medium",
-    "question": "Find all actors who acted in Inception.",
-    "sql": "SELECT a.full_name FROM actors a JOIN movie_actors ma ON a.id = ma.actor_id JOIN movies m ON ma.movie_id = m.id WHERE m.title = 'Inception';"
+    "id": 60,
+    "question": "Liệt kê id và tên đạo diễn.",
+    "ground_truth_sql": "SELECT id, full_name FROM directors;"
   },
   {
-    "id": 15,
-    "difficulty": "medium",
-    "question": "Show the genres of the movie Interstellar.",
-    "sql": "SELECT g.name FROM genres g JOIN movie_genres mg ON g.id = mg.genre_id JOIN movies m ON mg.movie_id = m.id WHERE m.title = 'Interstellar';"
+    "id": 61,
+    "question": "Liệt kê phim và thể loại của chúng.",
+    "ground_truth_sql": "SELECT m.title, g.name FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id;"
   },
-
   {
-    "id": 16,
-    "difficulty": "medium",
-    "question": "List movies and their average review scores.",
-    "sql": "SELECT m.title, AVG(r.rating) AS average_score FROM movies m JOIN reviews r ON m.id = r.movie_id GROUP BY m.id, m.title;"
+    "id": 62,
+    "question": "Liệt kê phim và diễn viên tham gia.",
+    "ground_truth_sql": "SELECT m.title, a.full_name FROM movies m JOIN movie_actors ma ON m.id = ma.movie_id JOIN actors a ON ma.actor_id = a.id;"
   },
-
   {
-    "id": 17,
-    "difficulty": "medium",
-    "question": "Find movies reviewed by John Smith.",
-    "sql": "SELECT DISTINCT m.title FROM movies m JOIN reviews r ON m.id = r.movie_id JOIN users u ON r.user_id = u.id WHERE u.full_name = 'John Smith';"
+    "id": 63,
+    "question": "Liệt kê phim và đạo diễn của chúng.",
+    "ground_truth_sql": "SELECT m.title, d.full_name FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id;"
   },
-
   {
-    "id": 18,
-    "difficulty": "medium",
-    "question": "List actors and their roles in The Dark Knight.",
-    "sql": "SELECT a.full_name, ma.role_name FROM actors a JOIN movie_actors ma ON a.id = ma.actor_id JOIN movies m ON ma.movie_id = m.id WHERE m.title = 'The Dark Knight';"
+    "id": 64,
+    "question": "Liệt kê đánh giá cùng tên người dùng.",
+    "ground_truth_sql": "SELECT u.full_name, r.* FROM reviews r JOIN users u ON r.user_id = u.id;"
   },
-
   {
-    "id": 19,
-    "difficulty": "medium",
-    "question": "Show movies directed by directors from the United Kingdom.",
-    "sql": "SELECT m.title, d.full_name FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'United Kingdom';"
+    "id": 65,
+    "question": "Liệt kê đánh giá cùng tên phim.",
+    "ground_truth_sql": "SELECT m.title, r.* FROM reviews r JOIN movies m ON r.movie_id = m.id;"
   },
-
   {
-    "id": 20,
-    "difficulty": "medium",
-    "question": "List action movies released after 2015.",
-    "sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Action' AND m.release_year > 2015;"
+    "id": 66,
+    "question": "Liệt kê các phim thuộc thể loại Drama.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Drama';"
+  },
+  {
+    "id": 67,
+    "question": "Liệt kê các phim thuộc thể loại Comedy.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Comedy';"
+  },
+  {
+    "id": 68,
+    "question": "Liệt kê phim do đạo diễn người Nhật thực hiện.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'Japan';"
+  },
+  {
+    "id": 69,
+    "question": "Liệt kê phim do đạo diễn người Hàn Quốc thực hiện.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'South Korea';"
+  },
+  {
+    "id": 70,
+    "question": "Liệt kê diễn viên tham gia phim có id bằng 5.",
+    "ground_truth_sql": "SELECT a.full_name FROM movie_actors ma JOIN actors a ON ma.actor_id = a.id WHERE ma.movie_id = 5;"
+  },
+  {
+    "id": 71,
+    "question": "Đếm số phim.",
+    "ground_truth_sql": "SELECT COUNT(*) FROM movies;"
+  },
+  {
+    "id": 72,
+    "question": "Đếm số người dùng.",
+    "ground_truth_sql": "SELECT COUNT(*) FROM users;"
+  },
+  {
+    "id": 73,
+    "question": "Đếm số thể loại phim.",
+    "ground_truth_sql": "SELECT COUNT(*) FROM genres;"
+  },
+  {
+    "id": 74,
+    "question": "Đếm số diễn viên.",
+    "ground_truth_sql": "SELECT COUNT(*) FROM actors;"
+  },
+  {
+    "id": 75,
+    "question": "Đếm số đạo diễn.",
+    "ground_truth_sql": "SELECT COUNT(*) FROM directors;"
+  },
+  {
+    "id": 76,
+    "question": "Tính điểm đánh giá trung bình của các phim.",
+    "ground_truth_sql": "SELECT AVG(avg_rating) FROM movies;"
+  },
+  {
+    "id": 77,
+    "question": "Tìm phim có điểm đánh giá thấp nhất.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE avg_rating = (SELECT MIN(avg_rating) FROM movies);"
+  },
+  {
+    "id": 78,
+    "question": "Tìm phim có thời lượng ngắn nhất.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes = (SELECT MIN(duration_minutes) FROM movies);"
+  },
+  {
+    "id": 79,
+    "question": "Tìm năm phát hành mới nhất.",
+    "ground_truth_sql": "SELECT MAX(release_year) FROM movies;"
+  },
+  {
+    "id": 80,
+    "question": "Tìm năm phát hành cũ nhất.",
+    "ground_truth_sql": "SELECT MIN(release_year) FROM movies;"
+  },
+  {
+    "id": 81,
+    "question": "Cho biết các phim được sản xuất tại USA.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'USA';"
+  },
+  {
+    "id": 82,
+    "question": "Cho biết các phim được sản xuất tại Vietnam.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'Vietnam';"
+  },
+  {
+    "id": 83,
+    "question": "Hiển thị các phim có điểm đánh giá dưới 7.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE avg_rating < 7;"
+  },
+  {
+    "id": 84,
+    "question": "Hiển thị các phim có điểm đánh giá từ 8 đến 9.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE avg_rating BETWEEN 8 AND 9;"
+  },
+  {
+    "id": 85,
+    "question": "Liệt kê người dùng có email kết thúc bằng .com.",
+    "ground_truth_sql": "SELECT * FROM users WHERE email LIKE '%.com';"
+  },
+  {
+    "id": 86,
+    "question": "Liệt kê người dùng có email chứa yahoo.",
+    "ground_truth_sql": "SELECT * FROM users WHERE email LIKE '%yahoo%';"
+  },
+  {
+    "id": 87,
+    "question": "Lấy danh sách phim bằng tiếng Hàn.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE language = 'Korean';"
+  },
+  {
+    "id": 88,
+    "question": "Lấy danh sách phim bằng tiếng Trung.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE language = 'Chinese';"
+  },
+  {
+    "id": 89,
+    "question": "Cho biết các phim có thời lượng từ 90 đến 120 phút.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes BETWEEN 90 AND 120;"
+  },
+  {
+    "id": 90,
+    "question": "Cho biết các phim dài hơn 2 giờ.",
+    "ground_truth_sql": "SELECT * FROM movies WHERE duration_minutes > 120;"
+  },
+  {
+    "id": 91,
+    "question": "Liệt kê tên phim cùng quốc gia sản xuất.",
+    "ground_truth_sql": "SELECT title, country FROM movies;"
+  },
+  {
+    "id": 92,
+    "question": "Liệt kê tên phim cùng ngôn ngữ.",
+    "ground_truth_sql": "SELECT title, language FROM movies;"
+  },
+  {
+    "id": 93,
+    "question": "Hiển thị tên diễn viên và quốc gia.",
+    "ground_truth_sql": "SELECT full_name, country FROM actors;"
+  },
+  {
+    "id": 94,
+    "question": "Hiển thị tên đạo diễn và quốc gia.",
+    "ground_truth_sql": "SELECT full_name, country FROM directors;"
+  },
+  {
+    "id": 95,
+    "question": "Liệt kê các phim thuộc thể loại Horror.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Horror';"
+  },
+  {
+    "id": 96,
+    "question": "Liệt kê các phim thuộc thể loại Romance.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Romance';"
+  },
+  {
+    "id": 97,
+    "question": "Cho biết các phim thuộc thể loại Thriller.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Thriller';"
+  },
+  {
+    "id": 98,
+    "question": "Cho biết các phim thuộc thể loại Sci-Fi.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE g.name = 'Sci-Fi';"
+  },
+  {
+    "id": 99,
+    "question": "Liệt kê các phim do đạo diễn người Canada thực hiện.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'Canada';"
+  },
+  {
+    "id": 100,
+    "question": "Liệt kê các phim do đạo diễn người France thực hiện.",
+    "ground_truth_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.id = md.movie_id JOIN directors d ON md.director_id = d.id WHERE d.country = 'France';"
   }
 ]

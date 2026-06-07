@@ -8,180 +8,622 @@ import java.util.Map;
 @Service
 public class RagPromptBuilder {
 
-    public String buildPrompt(String schema,
-                              String question,
-                              List<Map<String, String>> examples) {
+    public String buildPrompt(
+            String schema,
+            String question,
+            String decomposition,
+            List<Map<String, String>> examples
+    ) {
 
         StringBuilder sb = new StringBuilder();
 
         sb.append("""
 
+=================================================
+SCHEMA RELEVANCE CHECK
+======================
 
-Your task is to convert natural language questions into VALID MySQL SELECT queries.
+FIRST TASK
 
+Determine whether the user question can be answered
+using ONLY the provided database schema.
 
-SOME EXAMPLES:
+Before generating SQL:
 
--Example1 :
+1. Verify that all requested information exists in schema.
+2. Verify that required entities can be represented by schema tables and columns.
+3. Verify that requested relationships can be derived from schema relationships.
+
+If ANY required information is missing:
+
+Output exactly:
+
+NOT_RELATED
+
+and STOP.
+
+Do not generate SQL.
+Do not explain.
+Do not guess.
+Do not infer missing concepts.
+
+=================================================
+UNKNOWN ENTITY RULE
+===================
+
+Do not assume that a proper noun exists in the database.
+
+Examples:
+
+* Ben
+* Julie
+* Naruto
+* Messi
+* Arsenal
+* Pokemon
+
+These names may only be used if the schema contains
+a column capable of storing them and the question
+can be answered using available schema data.
+
+If the question requires external knowledge,
+fictional story knowledge, real-world facts,
+events, timelines, biographies, weather,
+sports results, or information not represented
+in the schema:
+
+Output exactly:
+
+NOT_RELATED
+
+=================================================
+RELATED VS NOT RELATED EXAMPLES
+===============================
+
 Question:
-- liệt kê các phim được sản xuất tại Mỹ
-                
-Correct SQL:
-- SELECT * FROM movies WHERE country = 'USA';
-                
-Reason:
-- country is a direct column in movies table.
-- DO NOT JOIN countries table.
+List all movies.
 
--Example2 :
+Output:
+SELECT * FROM movies;
+
 Question:
-List movies and their genres.
+Show movies released after 2020.
+
+Output:
+SELECT * FROM movies WHERE release_year > 2020;
+
+Question:
+Ben and Julie met for the first time in which episode?
+
+Output:
+NOT_RELATED
+
+Question:
+Who is Ben Tennyson?
+
+Output:
+NOT_RELATED
+
+Question:
+What is the weather today?
+
+Output:
+NOT_RELATED
+
+Question:
+Which team won the Champions League?
+
+Output:
+NOT_RELATED
+
+=================================================
+STRICT DATASET MATCHING
+=======================
+
+You are an expert MySQL Text-to-SQL generator.
+
+Generate ONE valid MySQL SQL query.
+
+OUTPUT RULES
+
+1. Output ONLY SQL.
+2. No markdown.
+3. No explanation.
+4. No comments.
+5. Use only schema tables and columns.
+6. Never invent tables.
+7. Never invent columns.
+8. Follow schema relationships exactly.
+9. Preserve dataset SQL style.
+10. Dataset matching is more important than optimization.
+
+
+=================================================
+STRICT DATASET MATCHING
+=================================================
+
+You are an expert MySQL Text-to-SQL generator.
+
+Generate ONE valid MySQL SQL query.
+
+OUTPUT RULES
+
+1. Output ONLY SQL.
+2. No markdown.
+3. No explanation.
+4. No comments.
+5. Use only schema tables and columns.
+6. Never invent tables.
+7. Never invent columns.
+8. Follow schema relationships exactly.
+9. Preserve dataset SQL style.
+10. Dataset matching is more important than optimization.
+    
+
+=================================================
+DATASET ALIGNMENT RULES
+=================================================
+
+The goal is NOT to generate the smartest SQL.
+
+The goal is to generate SQL that matches dataset style exactly.
+
+If multiple SQL queries can answer the question:
+
+ALWAYS choose the SQL pattern used in dataset examples.
+
+Never:
+
+- optimize SQL
+- reduce columns
+- add extra columns
+- rename aliases
+- replace SELECT * with selected columns
+- replace LEFT JOIN with NOT EXISTS
+- replace LEFT JOIN with NOT IN
+- replace subquery with ORDER BY LIMIT 1
+- replace dataset style with a smarter SQL
+
+=================================================
+SELECT STAR RULES
+=================================================
+
+If user asks:
+
+- toàn bộ
+- tất cả
+- all
+
+Use:
+
+SELECT *
+
+unless columns are explicitly requested.
+
+Examples:
+
+danh sách toàn bộ người dùng
+
+SELECT *
+FROM users;
+
+danh sách toàn bộ phim
+
+SELECT *
+FROM movies;
+
+danh sách toàn bộ thể loại phim
+
+SELECT *
+FROM genres;
+
+List all favorites
+
+SELECT *
+FROM favorites;
+
+=================================================
+MOVIE COUNTRY RULES
+=================================================
+
+Movie country questions use:
+
+movies.country
+
+Examples:
+
+SELECT *
+FROM movies
+WHERE country='USA';
+
+SELECT *
+FROM movies
+WHERE country='Japan';
+
+SELECT *
+FROM movies
+WHERE country='South Korea';
+
+Never generate:
+
+United States
+United States of America
+
+Use exactly:
+
+USA
+
+Only use directors.country if question explicitly mentions director nationality.
+
+=================================================
+MOVIE LANGUAGE RULES
+=================================================
+
+Examples:
+
+SELECT *
+FROM movies
+WHERE language='English';
+
+SELECT *
+FROM movies
+WHERE language='Japanese';
+
+SELECT *
+FROM movies
+WHERE language='Korean';
+
+=================================================
+MOVIE FILTER RULES
+=================================================
+
+Questions like:
+
+- phim tiếng anh
+- phim nhật bản
+- phim hàn quốc
+- avg_rating > x
+- duration < x
+- release year > x
+
+Return:
+
+SELECT *
+FROM movies
+WHERE ...
+
+Do not return title only.
+
+=================================================
+GENRE RULES
+=================================================
+
+Questions:
+
+- phim thuộc thể loại
+- movies in genre
+- movies with genre
+
+Return movies.
+
+Example:
+
+SELECT m.title
+FROM movies m
+JOIN movie_genres mg ON m.id=mg.movie_id
+JOIN genres g ON mg.genre_id=g.id
+WHERE g.name='Drama';
+
+Never:
+
+SELECT *
+FROM genres
+WHERE name='Drama';
+
+=================================================
+REVIEW DISPLAY RULES
+=================================================
+
+Liệt kê đánh giá cùng tên người dùng
+
+SELECT u.full_name,r.*
+FROM reviews r
+JOIN users u ON r.user_id=u.id;
+
+Liệt kê đánh giá cùng tên phim
+
+SELECT m.title,r.*
+FROM reviews r
+JOIN movies m ON r.movie_id=m.id;
+
+Never use GROUP BY.
+
+=================================================
+MOVIE WITH ACTOR RULES
+=================================================
+
+Question:
+
+List movies with actor named 'Leonardo DiCaprio'
+
+Return:
+
+SELECT m.*
+FROM movies m
+JOIN movie_actors ma ON m.id=ma.movie_id
+WHERE ma.actor_id=
+(
+SELECT a.id
+FROM actors a
+WHERE a.full_name='Leonardo DiCaprio'
+);
+
+Never return title only.
+
+=================================================
+MOVIES WITH REVIEWS
+=================================================
+
+Question:
+
+List movies with at least one review
+
+Return:
+
+SELECT DISTINCT m.title
+FROM movies m
+JOIN reviews r ON m.id=r.movie_id;
+
+=================================================
+MOVIES WITHOUT REVIEWS
+=================================================
+
+Question:
+
+List movies without any reviews
+
+Return:
+
+SELECT m.title
+FROM movies m
+LEFT JOIN reviews r ON m.id=r.movie_id
+WHERE r.id IS NULL;
+
+Never use:
+
+NOT EXISTS
+NOT IN
+
+=================================================
+ACTOR ROLE RULES
+=================================================
+
+Question:
+
+List actors and their roles
+
+Return:
+
+SELECT actors.full_name,
+movie_actors.role_name
+FROM actors
+JOIN movie_actors
+ON actors.id=movie_actors.actor_id;
+
+Never generate:
+
+actor_roles
+roles
+
+=================================================
+REVIEW RATING RULES
+=================================================
+
+Movie rating:
+
+movies.avg_rating
+
+Review rating:
+
+reviews.rating
+
+Examples:
+
+SELECT AVG(avg_rating)
+FROM movies;
+
+SELECT *
+FROM movies
+WHERE avg_rating<7;
+
+SELECT *
+FROM reviews
+WHERE rating>9;
+
+=================================================
+MOVIE FAVORITE COUNT RULES
+=================================================
+
+Question:
+
+List movies sorted by number of favorites
+
+Return:
+
+SELECT m.title,
+COUNT(f.user_id) AS fav_count
+FROM movies m
+JOIN favorites f ON m.id=f.movie_id
+GROUP BY m.id
+ORDER BY fav_count DESC;
+
+Alias must be:
+
+fav_count
+
+=================================================
+MOVIES PER GENRE
+=================================================
+
+SELECT g.name,
+COUNT(mg.movie_id)
+FROM genres g
+JOIN movie_genres mg ON g.id=mg.genre_id
+GROUP BY g.id;
+
+=================================================
+REVIEWS PER MOVIE
+=================================================
+
+SELECT m.title,
+COUNT(r.id)
+FROM movies m
+LEFT JOIN reviews r ON m.id=r.movie_id
+GROUP BY m.id;
+
+Always use LEFT JOIN.
+
+=================================================
+MOVIES PER DIRECTOR
+=================================================
+
+SELECT d.full_name,
+COUNT(md.movie_id)
+FROM directors d
+JOIN movie_directors md ON d.id=md.director_id
+GROUP BY d.id;
+
+=================================================
+REVIEWS PER USER
+=================================================
+
+SELECT u.full_name,
+COUNT(r.id)
+FROM users u
+LEFT JOIN reviews r ON u.id=r.user_id
+GROUP BY u.id;
+
+=================================================
+AVERAGE REVIEW RATING PER MOVIE
+=================================================
+
+SELECT m.title,
+AVG(r.rating)
+FROM movies m
+JOIN reviews r ON m.id=r.movie_id
+GROUP BY m.id;
+
+=================================================
+MOVIES BY COUNTRY
+=================================================
+
+SELECT `country`,
+COUNT(`movies`.`id`) as total
+FROM `movies`
+GROUP BY `country`;
+
+Alias must be:
+
+total
+
+=================================================
+HIGHEST MOVIE RATING
+=================================================
+
+SELECT *
+FROM movies
+WHERE avg_rating=
+(
+SELECT MAX(avg_rating)
+FROM movies
+);
+
+Never use:
+
+ORDER BY avg_rating DESC
+LIMIT 1
+
+=================================================
+LONGEST MOVIE
+=================================================
+
+SELECT *
+FROM movies
+WHERE duration_minutes=
+(
+SELECT MAX(duration_minutes)
+FROM movies
+);
+
+Never use:
+
+ORDER BY duration_minutes DESC
+LIMIT 1
+
+=================================================
+AVERAGE MOVIE RATING
+=================================================
+
+SELECT AVG(avg_rating)
+FROM movies;
+
+Never generate:
+
+SELECT AVG(movies.avg_rating)
+FROM movies;
+
+=================================================
+DATABASE SCHEMA
+=================================================
+
+{schema}
+
+=================================================
+QUESTION ANALYSIS
+=================================================
+
+{decomposition}
+
+=================================================
+SIMILAR EXAMPLES
+=================================================
+
+{examples}
+
+=================================================
+USER QUESTION
+=================================================
+
+{question}
 
 SQL:
-SELECT m.title, g.name FROM movies m JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id;
-
-Why:
-movies -> movie_genres -> genres
-
-               
-IMPORTANT RULES:
-- Use ONLY the exact table and column names shown in the schema.
-- If JOIN creates duplicate rows for identical values, use DISTINCT.
-- When listing unique names/categories/genres/actors/users → prefer SELECT DISTINCT.
-- Avoid duplicate results unless the question explicitly requires all rows.
-- Do NOT invent columns like runtime, length, director, genre, country.
-- duration column is named: duration_minutes
-- director is linked via director_id
-- nationality is the correct column name (NOT country)
-- genre requires JOIN movie_genre and genres
-- actor requires JOIN movie_actor and actors
-- Return ONLY pure MySQL query.
-- No explanation.
-- No markdown.
-- No ```sql```
-
-STRICT OUTPUT RULES:
-- Only output final SQL
-- No explanation
-- No comments
-- Only SELECT
-- Use exact table + column names
-- If filter condition exists → must include WHERE
-- If join required → must include
-
-CRITICAL INSTRUCTIONS:
-
-Output ONLY a single valid MySQL SELECT statement.
-DO NOT include explanations, comments, markdown, or code fences.
-DO NOT output anything except the final SQL query.
-The query MUST start with SELECT.
-Use only tables and columns defined in the schema.
-DO NOT invent or assume any column names.
-Column names and table names must match the schema EXACTLY.
-If a condition is mentioned → MUST use WHERE.
-If aggregation is used → MUST use proper GROUP BY.
-If filtering aggregated results → MUST use HAVING.
-If sorting is required → MUST use ORDER BY.
-If limiting results → MUST use LIMIT.
-If relationship is required → MUST use proper JOIN with correct foreign keys.
-Use explicit JOIN syntax (no implicit joins).
-
-
-
-SCHEMA CONSTRAINTS:
-
-duration column name: duration_minutes
-nationality is the correct column name (NOT country)
-Director relationship uses director_id
-Genre requires JOIN movie_genres and genres
-Actor requires JOIN movie_actors and actors
-Reviews link via movie_id and user_id
-Favorites link via movie_id and user_id
-
-
-
-FORBIDDEN:
-
-INSERT, UPDATE, DELETE, DROP, ALTER
-Subqueries unless explicitly required
-Non-MySQL syntax
-Aliases that change column meaning
-Selecting columns that do not exist
-
-RETURN FORMAT:
-
-SELECT ... FROM ... JOIN ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT ...;
-
-
-Country mappings:
-
-- Mỹ → USA
-- Hoa Kỳ → USA
-
-- Nhật → Japan
-- Nhật Bản → Japan
-
-- Hàn → Korea
-- Hàn Quốc → Korea
-
-- Trung Quốc → China
-- Trung → China
-
-- Ấn Độ → India
-- Ấn → India
-
-- Việt Nam → Vietnam
-- Việt → Vietnam
-
-- Anh → United Kingdom
-
-- Pháp → France
-
-- Thái Lan → Thailand
-
-- Hồng Kông → Hong Kong
-
-- Đài Loan → Taiwan
 """);
 
-        sb.append("\n\n====================\n");
-        sb.append("DATABASE SCHEMA:\n");
+        sb.append("\nSCHEMA:\n");
         sb.append(schema);
-        sb.append("\n====================\n\n");
 
-        // Add schema relationship hints (CRITICAL for accuracy)
-        sb.append("""
-TABLE RELATIONSHIPS:
-
-users.id = reviews.user_id
-users.id = favorites.user_id
-
-movies.id = reviews.movie_id
-movies.id = favorites.movie_id
-movies.id = movie_genres.movie_id
-movies.id = movie_actors.movie_id
-movies.id = movie_directors.movie_id
-
-genres.id = movie_genres.genre_id
-actors.id = movie_actors.actor_id
-directors.id = movie_directors.director_id
-""");
-
-        sb.append("\n====================\n\n");
+        sb.append("\n\nQUESTION ANALYSIS:\n");
+        sb.append(decomposition);
 
         if (examples != null && !examples.isEmpty()) {
-            sb.append("SIMILAR EXAMPLES:\n\n");
+
+            sb.append("\n\nSIMILAR EXAMPLES:\n");
 
             for (Map<String, String> ex : examples) {
-                sb.append("Question: ").append(ex.get("question")).append("\n");
-                sb.append("SQL: ").append(ex.get("sql")).append("\n\n");
-            }
 
-            sb.append("====================\n\n");
+                sb.append("\nQuestion: ");
+                sb.append(ex.get("question"));
+
+                sb.append("\nSQL: ");
+                sb.append(ex.get("sql"));
+
+                sb.append("\n");
+            }
         }
 
-        sb.append("USER QUESTION:\n");
+        sb.append("\nUSER QUESTION:\n");
         sb.append(question);
+
         sb.append("\n\nSQL:");
 
         return sb.toString();

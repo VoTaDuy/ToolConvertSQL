@@ -32,22 +32,22 @@
   {
     "id": 7,
     "question": "danh sách toàn bộ thể loại phim",
-    "ground_truth_sql": "SELECT DISTINCT genres.name FROM genres JOIN movie_genres ON genres.id = movie_genres.genre_id;"
+    "ground_truth_sql": "SELECT * FROM genres;"
   },
   {
     "id": 8,
     "question": "danh sách tất cả diễn viên",
-    "ground_truth_sql": "SELECT DISTINCT actors.id, actors.full_name FROM actors;"
+    "ground_truth_sql": "SELECT * FROM actors;"
   },
   {
     "id": 9,
     "question": "danh sách tất cả đạo diễn",
-    "ground_truth_sql": "SELECT DISTINCT directors.id, directors.full_name FROM directors;"
+    "ground_truth_sql": "SELECT * FROM directors;"
   },
   {
     "id": 10,
     "question": "danh sách các phim sản xuất tại hàn quốc",
-    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'Korea';"
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'South Korea';"
   },
   {
     "id": 11,
@@ -71,7 +71,7 @@
   },
   {
     "id": 15,
-      "question": "Find reviews with rating = 8.",
+    "question": "Find reviews with rating = 8.",
     "ground_truth_sql": "SELECT * FROM reviews WHERE rating = 8;"
   },
   {
@@ -249,4 +249,5 @@
     "question": "Count number of movies by country.",
     "ground_truth_sql": "SELECT `country`, COUNT(`movies`.`id`) as total FROM `movies` GROUP BY `country`;"
   }
+
 ]

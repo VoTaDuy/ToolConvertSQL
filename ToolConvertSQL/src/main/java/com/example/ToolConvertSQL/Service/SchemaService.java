@@ -150,6 +150,14 @@ public class SchemaService {
 
         return sb.toString();
     }
+    public String getTableSchema(String tableName) {
+
+        if (!ALLOWED_TABLES.contains(tableName)) {
+            return "";
+        }
+
+        return getTable(tableName);
+    }
 
     public Set<String> getAllowedTables() {
         return Set.copyOf(ALLOWED_TABLES);

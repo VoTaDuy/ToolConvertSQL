@@ -1,7 +1,10 @@
-package com.example.ToolConvertSQL.Service;
+
+        package com.example.ToolConvertSQL.Service;
 
 import com.example.ToolConvertSQL.Service.Imp.AiSchemaServiceImp;
+import com.example.ToolConvertSQL.Service.Imp.SchemaSelectorServiceImp;
 import com.example.ToolConvertSQL.Service.Imp.VectorServiceImp;
+
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -10,113 +13,289 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class AiSchemaService implements AiSchemaServiceImp {
+public class AiSchemaService
+        implements AiSchemaServiceImp {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate =
+            new RestTemplate();
 
-    private final SchemaService schemaService;
     private final EmbeddingService embeddingService;
+
     private final VectorServiceImp vectorService;
+
+    private final SchemaSelectorServiceImp schemaSelectorService;
+
     private final RagPromptBuilder ragPromptBuilder;
 
-    public AiSchemaService(SchemaService schemaService,
-                           EmbeddingService embeddingService,
-                           VectorServiceImp vectorService,
-                           RagPromptBuilder ragPromptBuilder) {
-        this.schemaService = schemaService;
-        this.embeddingService = embeddingService;
-        this.vectorService = vectorService;
-        this.ragPromptBuilder = ragPromptBuilder;
+    public AiSchemaService(
+            EmbeddingService embeddingService,
+            VectorServiceImp vectorService,
+            SchemaSelectorServiceImp schemaSelectorService,
+            RagPromptBuilder ragPromptBuilder
+    ) {
+
+        this.embeddingService =
+                embeddingService;
+
+        this.vectorService =
+                vectorService;
+
+        this.schemaSelectorService =
+                schemaSelectorService;
+
+        this.ragPromptBuilder =
+                ragPromptBuilder;
     }
 
+    @Override
     public String generateSql(String question) {
 
         try {
 
-            String schema = schemaService.getFullSchema();
+            List<Double> questionEmbedding =
+                    embeddingService.embed(question);
 
-            List<Double> embedding = embeddingService.embed(question);
-
-            if (embedding == null) {
+            if (questionEmbedding == null) {
                 return null;
             }
 
+            // RAG schema retrieval
+            String relevantSchema =
+                    schemaSelectorService
+                            .selectRelevantSchema(
+                                    question
+                            );
 
+            // retrieve similar examples
             List<Map<String, String>> examples =
-                    vectorService.search(embedding, 5);
+                    vectorService.search(
+                            questionEmbedding,
+                            5
+                    );
 
-            String prompt = ragPromptBuilder.buildPrompt(
-                    schema,
-                    question,
-                    examples
-            );
+            // lightweight decomposition
+            String decomposition =
+                    buildSimpleDecomposition(
+                            question
+                    );
 
-            String response = callOllama(prompt);
+            // build prompt
+            String prompt =
+                    ragPromptBuilder.buildPrompt(
+                            relevantSchema,
+                            question,
+                            decomposition,
+                            examples
+                    );
+
+            // generate SQL
+            String response =
+                    callOllama(prompt);
 
             return cleanSql(response);
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
             return null;
         }
     }
 
+    @Override
+    public String generateSqlWithSchema(
+            String question,
+            String schema,
+            String decomposition
+    ) {
+
+        try {
+
+            List<Double> questionEmbedding =
+                    embeddingService.embed(question);
+
+            if (questionEmbedding == null) {
+                return null;
+            }
+
+            List<Map<String, String>> examples =
+                    vectorService.search(
+                            questionEmbedding,
+                            5
+                    );
+
+            String prompt =
+                    ragPromptBuilder.buildPrompt(
+                            schema,
+                            question,
+                            decomposition,
+                            examples
+                    );
+
+            String response =
+                    callOllama(prompt);
+
+            return cleanSql(response);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    private String buildSimpleDecomposition(
+            String question
+    ) {
+
+        question = question.toLowerCase();
+
+        StringBuilder sb =
+                new StringBuilder();
+
+        if (question.contains("actor")
+                || question.contains("diễn viên")) {
+
+            sb.append("- Entity: actors\n");
+        }
+
+        if (question.contains("genre")
+                || question.contains("thể loại")) {
+
+            sb.append("- Entity: genres\n");
+        }
+
+        if (question.contains("director")
+                || question.contains("đạo diễn")) {
+
+            sb.append("- Entity: directors\n");
+        }
+
+        if (question.contains("review")
+                || question.contains("đánh giá")) {
+
+            sb.append("- Entity: reviews\n");
+        }
+
+        if (question.contains("favorite")
+                || question.contains("yêu thích")) {
+
+            sb.append("- Entity: favorites\n");
+        }
+
+        if (question.contains("count")) {
+
+            sb.append("- Aggregation: COUNT\n");
+        }
+
+        if (question.contains("average")
+                || question.contains("avg")) {
+
+            sb.append("- Aggregation: AVG\n");
+        }
+
+        if (question.contains("highest")
+                || question.contains("max")) {
+
+            sb.append("- Ordering: DESC\n");
+        }
+
+        if (sb.isEmpty()) {
+
+            sb.append("- Basic SELECT query");
+        }
+
+        return sb.toString();
+    }
+
     private String callOllama(String prompt) {
 
-        String url = "http://localhost:11434/api/generate";
+        String url =
+                "http://localhost:11434/api/generate";
 
-        Map<String, Object> requestBody = Map.of(
-                "model", "mistral",
-                "prompt", prompt,
-                "stream", false
+        Map<String, Object> requestBody =
+                Map.of(
+                        "model", "mistral",
+                        "prompt", prompt,
+                        "stream", false,
+                        "temperature", 0
+                );
+
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
         );
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<Map<String, Object>> request =
-                new HttpEntity<>(requestBody, headers);
+                new HttpEntity<>(
+                        requestBody,
+                        headers
+                );
 
         ResponseEntity<Map> response =
-                restTemplate.postForEntity(url, request, Map.class);
+                restTemplate.postForEntity(
+                        url,
+                        request,
+                        Map.class
+                );
 
-        if (response.getBody() == null) return null;
+        if (response.getBody() == null) {
+            return null;
+        }
 
-        return (String) response.getBody().get("response");
+        return (String)
+                response.getBody()
+                        .get("response");
     }
 
     private String cleanSql(String raw) {
 
-        if (raw == null) return null;
+        if (raw == null) {
+            return null;
+        }
 
         raw = raw.trim();
 
         // remove markdown
-        if (raw.startsWith("```")) {
-            raw = raw.replace("```sql", "")
-                    .replace("```", "")
-                    .trim();
+        raw = raw.replace("```sql", "")
+                .replace("```", "")
+                .trim();
+
+        // find SELECT
+        int selectIndex =
+                raw.toUpperCase()
+                        .indexOf("SELECT");
+
+        if (selectIndex != -1) {
+
+            raw = raw.substring(
+                    selectIndex
+            );
         }
 
-        // remove explanation if model hallucinated
-        if (raw.contains("\n")) {
-            raw = raw.split("\n")[0];
+        // stop at first semicolon
+        int semicolonIndex =
+                raw.indexOf(";");
+
+        if (semicolonIndex != -1) {
+
+            raw = raw.substring(
+                    0,
+                    semicolonIndex + 1
+            );
         }
 
-        if (!raw.endsWith(";")) {
-            raw = raw + ";";
-        }
-
-        return raw;
+        return raw.trim();
     }
 
     public String generateRaw(String prompt) {
 
         try {
 
-            String response = callOllama(prompt);
-
-            return response;
+            return callOllama(prompt);
 
         } catch (Exception e) {
 

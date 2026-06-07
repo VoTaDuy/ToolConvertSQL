@@ -1,6 +1,9 @@
 package com.example.ToolConvertSQL.Service;
 
 import com.example.ToolConvertSQL.Service.Imp.SQLValidatorServiceImp;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.Select;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -10,20 +13,16 @@ public class SQLValidatorService
     @Override
     public boolean isValid(String sql) {
 
-        if (sql == null || sql.isBlank()) {
-            return false;
-        }
+        try {
 
-        String lower =
-                sql.toLowerCase();
+            Statement stmt =
+                    CCJSqlParserUtil.parse(sql);
 
-        if (lower.contains("drop")
-                || lower.contains("delete")
-                || lower.contains("truncate")) {
+            return stmt instanceof Select;
+
+        } catch (Exception e) {
 
             return false;
         }
-
-        return lower.contains("select");
     }
 }

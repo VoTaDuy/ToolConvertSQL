@@ -20,55 +20,74 @@ public class SchemaSelectorService
             String question
     ) {
 
-        String fullSchema =
-                schemaService.getFullSchema();
+        String q = question.toLowerCase();
 
-        question = question.toLowerCase();
+        StringBuilder schema = new StringBuilder();
 
-        StringBuilder filtered =
-                new StringBuilder();
+        if (q.contains("user")
+                || q.contains("người dùng")) {
 
-        String[] lines =
-                fullSchema.split("\n");
-
-        for (String line : lines) {
-
-            String lower =
-                    line.toLowerCase();
-
-            if (question.contains("movie")
-                    && lower.contains("movie")) {
-
-                filtered.append(line)
-                        .append("\n");
-            }
-
-            if (question.contains("rating")
-                    && lower.contains("rating")) {
-
-                filtered.append(line)
-                        .append("\n");
-            }
-
-            if (question.contains("actor")
-                    && lower.contains("actor")) {
-
-                filtered.append(line)
-                        .append("\n");
-            }
-
-            if (question.contains("director")
-                    && lower.contains("director")) {
-
-                filtered.append(line)
-                        .append("\n");
-            }
+            schema.append(
+                    schemaService   .getTableSchema("users")
+            );
         }
 
-        if (filtered.isEmpty()) {
-            return fullSchema;
+        if (q.contains("movie")
+                || q.contains("phim")) {
+
+            schema.append(
+                    schemaService.getTableSchema("movies")
+            );
+
+            schema.append(
+                    schemaService.getTableSchema("movie_directors")
+            );
+
+            schema.append(
+                    schemaService.getTableSchema("movie_actors")
+            );
+
+            schema.append(
+                    schemaService.getTableSchema("movie_genres")
+            );
         }
 
-        return filtered.toString();
+        if (q.contains("director")
+                || q.contains("đạo diễn")) {
+
+            schema.append(
+                    schemaService.getTableSchema("directors")
+            );
+        }
+
+        if (q.contains("actor")
+                || q.contains("diễn viên")) {
+
+            schema.append(
+                    schemaService.getTableSchema("actors")
+            );
+        }
+
+        if (q.contains("genre")
+                || q.contains("thể loại")) {
+
+            schema.append(
+                    schemaService.getTableSchema("genres")
+            );
+        }
+
+        if (q.contains("review")
+                || q.contains("đánh giá")) {
+
+            schema.append(
+                    schemaService.getTableSchema("reviews")
+            );
+        }
+
+        if (schema.isEmpty()) {
+            return schemaService.getFullSchema();
+        }
+
+        return schema.toString();
     }
 }
