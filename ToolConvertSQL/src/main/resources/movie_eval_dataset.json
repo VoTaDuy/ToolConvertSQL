@@ -47,7 +47,7 @@
   {
     "id": 10,
     "question": "danh sách các phim sản xuất tại hàn quốc",
-    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'South Korea';"
+    "ground_truth_sql": "SELECT * FROM movies WHERE country = 'Korea';"
   },
   {
     "id": 11,
