@@ -33,31 +33,21 @@ public class SchemaSelectorService
         }
 
         if (q.contains("movie")
+                || q.contains("movies")
+                || q.contains("film")
                 || q.contains("phim")) {
 
-            schema.append(
-                    schemaService.getTableSchema("movies")
-            );
-
-            schema.append(
-                    schemaService.getTableSchema("movie_directors")
-            );
-
-            schema.append(
-                    schemaService.getTableSchema("movie_actors")
-            );
-
-            schema.append(
-                    schemaService.getTableSchema("movie_genres")
-            );
+            schema.append(schemaService.getTableSchema("movies"));
+            schema.append(schemaService.getTableSchema("movie_directors"));
+            schema.append(schemaService.getTableSchema("movie_actors"));
+            schema.append(schemaService.getTableSchema("movie_genres"));
         }
-
         if (q.contains("director")
+                || q.contains("directors")
+                || q.contains("directed")
                 || q.contains("đạo diễn")) {
 
-            schema.append(
-                    schemaService.getTableSchema("directors")
-            );
+            schema.append(schemaService.getTableSchema("directors"));
         }
 
         if (q.contains("actor")
@@ -69,11 +59,19 @@ public class SchemaSelectorService
         }
 
         if (q.contains("genre")
+                || q.contains("genres")
+                || q.contains("action")
+                || q.contains("comedy")
+                || q.contains("drama")
+                || q.contains("romance")
+                || q.contains("thriller")
+                || q.contains("horror")
+                || q.contains("crime")
+                || q.contains("fantasy")
+                || q.contains("animation")
                 || q.contains("thể loại")) {
 
-            schema.append(
-                    schemaService.getTableSchema("genres")
-            );
+            schema.append(schemaService.getTableSchema("genres"));
         }
 
         if (q.contains("review")

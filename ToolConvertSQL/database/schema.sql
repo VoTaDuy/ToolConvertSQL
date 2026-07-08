@@ -94,6 +94,12 @@ CREATE TABLE favorites (
   FOREIGN KEY (movie_id) REFERENCES movies(id)
 );
 
+CREATE TABLE nl2sql_examples (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    question TEXT NOT NULL,
+    sql_text LONGTEXT NOT NULL
+);
+
 CREATE TABLE nl2sql_embeddings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     question TEXT NOT NULL,

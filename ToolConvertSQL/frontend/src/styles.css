@@ -47,6 +47,10 @@ pre {
   min-height: 100vh;
   overflow: hidden;
   padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .ambient {
@@ -73,6 +77,7 @@ pre {
 .app-card {
   position: relative;
   z-index: 1;
+  width: min(100%, 1000px);
   max-width: 1180px;
   margin: 0 auto;
   display: grid;

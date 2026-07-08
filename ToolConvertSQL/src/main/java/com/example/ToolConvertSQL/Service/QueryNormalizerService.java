@@ -117,9 +117,19 @@ public class QueryNormalizerService {
         // MOVIE DOMAIN TERMS
         // ==================================================
 
+        // ==================================================
+// MOVIE DOMAIN TERMS
+// ==================================================
+
         REPLACEMENTS.put("đạo diễn", "director");
         REPLACEMENTS.put("diễn viên", "actor");
         REPLACEMENTS.put("thể loại", "genre");
+
+        REPLACEMENTS.put("quốc gia", "country");
+        REPLACEMENTS.put("nước sản xuất", "country");
+        REPLACEMENTS.put("quốc gia sản xuất", "country");
+        REPLACEMENTS.put("sản xuất tại", "country");
+        REPLACEMENTS.put("xuất xứ", "country");
 
         REPLACEMENTS.put("bộ phim", "movie");
         REPLACEMENTS.put("phim điện ảnh", "movie");

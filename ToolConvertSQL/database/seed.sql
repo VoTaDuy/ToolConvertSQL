@@ -294,3 +294,112 @@ JOIN (
     GROUP BY movie_id
 ) r ON m.id = r.movie_id
 SET m.avg_rating = r.avg_r;
+    INSERT INTO nl2sql_examples(question, sql_text) VALUES
+
+    ('Danh sách tất cả phim',
+    'SELECT title FROM movies;'),
+
+    ('Hiển thị toàn bộ phim',
+    'SELECT title FROM movies;'),
+
+    ('Cho tôi tất cả phim',
+    'SELECT title FROM movies;'),
+
+    ('Danh sách phim của Christopher Nolan',
+    'SELECT m.title
+    FROM movies m
+    JOIN directors d ON m.director_id=d.id
+    WHERE d.name=''Christopher Nolan'';'),
+
+    ('Các phim do Christopher Nolan đạo diễn',
+    'SELECT m.title
+    FROM movies m
+    JOIN directors d ON m.director_id=d.id
+    WHERE d.name=''Christopher Nolan'';'),
+
+    ('Các phim của Leonardo DiCaprio',
+    'SELECT DISTINCT m.title
+    FROM movies m
+    JOIN movie_cast mc ON mc.movie_id=m.id
+    JOIN actors a ON a.id=mc.actor_id
+    WHERE a.name=''Leonardo DiCaprio'';'),
+
+    ('Những phim có Tom Hanks',
+    'SELECT DISTINCT m.title
+    FROM movies m
+    JOIN movie_cast mc ON mc.movie_id=m.id
+    JOIN actors a ON a.id=mc.actor_id
+    WHERE a.name=''Tom Hanks'';'),
+
+    ('Top 10 phim rating cao nhất',
+    'SELECT title,rating
+    FROM movies
+    ORDER BY rating DESC
+    LIMIT 10;'),
+
+    ('Top 5 phim được đánh giá cao nhất',
+    'SELECT title,rating
+    FROM movies
+    ORDER BY rating DESC
+    LIMIT 5;'),
+
+    ('Các phim Action',
+    'SELECT DISTINCT m.title
+    FROM movies m
+    JOIN movie_genres mg ON mg.movie_id=m.id
+    JOIN genres g ON g.id=mg.genre_id
+    WHERE g.name=''Action'';'),
+
+    ('Các phim Comedy',
+    'SELECT DISTINCT m.title
+    FROM movies m
+    JOIN movie_genres mg ON mg.movie_id=m.id
+    JOIN genres g ON g.id=mg.genre_id
+    WHERE g.name=''Comedy'';'),
+
+    ('Các phim Romance',
+    'SELECT DISTINCT m.title
+    FROM movies m
+    JOIN movie_genres mg ON mg.movie_id=m.id
+    JOIN genres g ON g.id=mg.genre_id
+    WHERE g.name=''Romance'';'),
+
+    ('Các phim của Mỹ',
+    'SELECT title
+    FROM movies
+    WHERE country=''USA'';'),
+
+    ('Các phim của Nhật Bản',
+    'SELECT title
+    FROM movies
+    WHERE country=''Japan'';'),
+
+    ('Các phim của Hàn Quốc',
+    'SELECT title
+    FROM movies
+    WHERE country=''South Korea'';'),
+
+    ('Các phim sau năm 2020',
+    'SELECT title
+    FROM movies
+    WHERE year>2020;'),
+
+    ('Các phim trước năm 2000',
+    'SELECT title
+    FROM movies
+    WHERE year<2000;'),
+
+    ('Các phim có rating trên 8',
+    'SELECT title
+    FROM movies
+    WHERE rating>8;'),
+
+    ('Các phim có rating dưới 6',
+    'SELECT title
+    FROM movies
+    WHERE rating<6;'),
+
+    ('Phim dài hơn 120 phút',
+    'SELECT title
+    FROM movies
+    WHERE runtime>120;');

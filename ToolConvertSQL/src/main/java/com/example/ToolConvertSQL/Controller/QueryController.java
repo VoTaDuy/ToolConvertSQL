@@ -1,6 +1,7 @@
 package com.example.ToolConvertSQL.Controller;
 
-import com.example.ToolConvertSQL.DTO.IntentCategory;
+import com.example.ToolConvertSQL.Service.EmbeddingService;
+import com.example.ToolConvertSQL.Service.VectorService;
 import com.example.ToolConvertSQL.DTO.IntentResult;
 import com.example.ToolConvertSQL.DTO.QueryRequest;
 import com.example.ToolConvertSQL.DTO.QueryResponse;
@@ -29,6 +30,8 @@ public class QueryController {
 
     private final IntentDetectionService intentDetectionService;
     private final QueryNormalizerService queryNormalizerService;
+    private final EmbeddingService embeddingService;
+    private final VectorService vectorService;
 
     public QueryController(
             QueryGenerateService ruleService,
@@ -40,7 +43,9 @@ public class QueryController {
             QuestionDecomposerService questionDecomposerService,
             SQLRefinerService sqlRefinerService,
             IntentDetectionService intentDetectionService,
-            QueryNormalizerService queryNormalizerService
+            QueryNormalizerService queryNormalizerService,
+            EmbeddingService embeddingService,
+            VectorService vectorService
     ) {
         this.ruleService = ruleService;
         this.ollamaService = ollamaService;
@@ -54,6 +59,8 @@ public class QueryController {
 
         this.intentDetectionService = intentDetectionService;
         this.queryNormalizerService = queryNormalizerService;
+        this.embeddingService = embeddingService;
+        this.vectorService = vectorService;
     }
 
     private String cleanSql(String sql) {
@@ -98,6 +105,25 @@ public class QueryController {
                     queryNormalizerService
                             .normalize(originalQuestion);
 
+            // =====================================
+            // VECTOR SEARCH
+            // =====================================
+
+            List<Double> embedding =
+                    embeddingService.embed(question);
+
+            List<Map<String, String>> examples =
+                    vectorService.search(embedding, 3);
+
+            System.out.println("========== RETRIEVED EXAMPLES ==========");
+
+            for (Map<String, String> example : examples) {
+
+                System.out.println("Question : " + example.get("question"));
+                System.out.println("Score    : " + example.get("score"));
+                System.out.println("SQL      : " + example.get("sql"));
+                System.out.println("--------------------------------------");
+            }
             System.out.println("========== ORIGINAL QUESTION ==========");
             System.out.println(originalQuestion);
 
@@ -192,7 +218,8 @@ public class QueryController {
                 sql = aiSchemaServiceImp.generateSqlWithSchema(
                         question,
                         filteredSchema,
-                        decomposition
+                        decomposition,
+                        examples
                 );
 
             } else {

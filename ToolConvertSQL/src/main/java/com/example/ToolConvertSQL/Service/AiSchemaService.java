@@ -104,25 +104,17 @@ public class AiSchemaService
 
     @Override
     public String generateSqlWithSchema(
+
             String question,
+
             String schema,
-            String decomposition
+
+            String decomposition,
+
+            List<Map<String, String>> examples
     ) {
 
         try {
-
-            List<Double> questionEmbedding =
-                    embeddingService.embed(question);
-
-            if (questionEmbedding == null) {
-                return null;
-            }
-
-            List<Map<String, String>> examples =
-                    vectorService.search(
-                            questionEmbedding,
-                            5
-                    );
 
             String prompt =
                     ragPromptBuilder.buildPrompt(

@@ -44,8 +44,6 @@ OUTPUT RULES
 STRICT DATASET MATCHING
 =================================================
 
-You are an expert MySQL Text-to-SQL generator.
-
 Generate ONE valid MySQL SQL query.
 
 OUTPUT RULES
@@ -60,7 +58,14 @@ OUTPUT RULES
 8. Follow schema relationships exactly.
 9. Preserve dataset SQL style.
 10. Dataset matching is more important than optimization.
-    
+11. If a table contains column "full_name",
+                    DO NOT use "name".
+12.If a relationship is not shown in the schema,
+                   DO NOT assume it exists.
+                
+13. Use exactly the relationships described in the schema.
+                
+14. The generated SQL MUST be executable without modifying any table or column names.     
 
 =================================================
 DATASET ALIGNMENT RULES
@@ -477,31 +482,6 @@ Never generate:
 
 SELECT AVG(movies.avg_rating)
 FROM movies;
-
-=================================================
-DATABASE SCHEMA
-=================================================
-
-{schema}
-
-=================================================
-QUESTION ANALYSIS
-=================================================
-
-{decomposition}
-
-=================================================
-SIMILAR EXAMPLES
-=================================================
-
-{examples}
-
-=================================================
-USER QUESTION
-=================================================
-
-{question}
-
 SQL:
 """);
 
